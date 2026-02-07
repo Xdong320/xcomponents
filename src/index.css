@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans text-figma-text-primary;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.43;
+    letter-spacing: 0.04em;
+  }
+}
