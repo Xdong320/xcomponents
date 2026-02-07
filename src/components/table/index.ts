@@ -9,6 +9,7 @@ export type {
   SorterResult,
   SortOrder,
   TableFilters,
+  TableLocale,
   FilterBuilderProps,
   FilterCondition,
   FilterConditionDateValue,

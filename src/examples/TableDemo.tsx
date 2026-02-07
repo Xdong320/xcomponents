@@ -101,6 +101,7 @@ const columns: CommonColumnType<SessionRecord>[] = [
     dataIndex: "sessionId",
     title: "会话ID",
     width: 280,
+    fixed: "left",
     render: (val: string) => (
       <span className="flex items-center gap-2">
         <span className="truncate font-normal text-figma-text-primary">
@@ -136,6 +137,7 @@ const columns: CommonColumnType<SessionRecord>[] = [
     dataIndex: "channel",
     title: "渠道",
     width: 140,
+    fixed: "left",
     sorter: true,
   },
   {
@@ -165,6 +167,7 @@ const columns: CommonColumnType<SessionRecord>[] = [
     title: "会话结束时间",
     width: 160,
     sorter: true,
+    fixed: "right",
   },
   {
     key: "importTime",
@@ -178,6 +181,7 @@ const columns: CommonColumnType<SessionRecord>[] = [
     dataIndex: "action",
     title: "操作",
     width: 56,
+    fixed: "right",
     align: "center",
     render: () => (
       <button
@@ -311,8 +315,8 @@ export function TableDemo() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-figma-page p-6 font-sans">
-      <div className="mx-auto max-w-[1320px]">
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-figma-page p-6 font-sans">
+      <div className="mx-auto min-w-0 max-w-[1320px]">
         <h1 className="mb-4 text-figma-label-md tracking-figma-md text-figma-text-primary">
           会话洞察 · 会话列表
         </h1>
@@ -327,13 +331,15 @@ export function TableDemo() {
             pageSize: 10,
             serverSide: false,
           }}
-          // rowSelection={{
-          //   type: "checkbox",
-          //   preserveSelectedRowKeys: true,
-          //   onChange: (selectedRowKeys, selectedRows) => {
-          //     console.log("选中行", selectedRowKeys, selectedRows);
-          //   },
-          // }}
+          scroll={{ y: 400, x: 1200 }}
+          rowSelection={{
+            type: "checkbox",
+            fixed: "left",
+            preserveSelectedRowKeys: true,
+            onChange: (selectedRowKeys, selectedRows) => {
+              console.log("选中行", selectedRowKeys, selectedRows);
+            },
+          }}
           filterBuilderProps={{
             id: "session-list-filter",
             fields: filterFields,

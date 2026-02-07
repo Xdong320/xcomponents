@@ -3,11 +3,40 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    overflow-x: hidden;
+  }
   body {
     @apply font-sans text-figma-text-primary;
     font-size: 14px;
     font-weight: 400;
     line-height: 1.43;
     letter-spacing: 0.04em;
+    overflow-x: hidden;
+  }
+}
+
+/* 表格滚动区域：美观滚动条，固定列与主体垂直滚动同步（不设 scrollbar-gutter 以免撑出页面横向滚动条） */
+@layer components {
+  .table-scroll-area {
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 transparent;
+  }
+  .table-scroll-area::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .table-scroll-area::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .table-scroll-area::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 4px;
+  }
+  .table-scroll-area::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+  }
+  .table-scroll-area::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }

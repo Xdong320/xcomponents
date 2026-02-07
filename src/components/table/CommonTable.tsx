@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { FilterBuilder } from "./FilterBuilder";
 import { ColumnSettings } from "./ColumnSettings";
 import type {
@@ -28,6 +34,18 @@ function getCellValue<T>(record: T, dataIndex: string | undefined): any {
   return value;
 }
 
+const SELECTION_COL_WIDTH = 40;
+
+function parseScrollDimension(
+  v: number | string | undefined,
+): number | string | undefined {
+  if (v == null) return undefined;
+  if (typeof v === "number") return v;
+  const num = parseInt(v, 10);
+  if (!Number.isNaN(num) && String(num) === String(v).trim()) return num;
+  return v;
+}
+
 export function CommonTable<T extends Record<string, any> = any>({
   columns,
   dataSource,
@@ -43,8 +61,12 @@ export function CommonTable<T extends Record<string, any> = any>({
   onSearchChange,
   filterBuilderProps,
   columnSettingsProps,
+  scroll: scrollProp,
+  locale: localeProp,
   onChange,
 }: CommonTableProps<T>) {
+  const emptyText = localeProp?.emptyText ?? "暂无数据";
+  const loadingText = localeProp?.loadingText ?? "加载中...";
   const getRowKey = useCallback(
     (record: T): Key =>
       typeof rowKey === "function" ? rowKey(record) : (record[rowKey] as Key),
@@ -64,6 +86,116 @@ export function CommonTable<T extends Record<string, any> = any>({
       return keys.includes(k);
     });
   }, [columns, columnSettingsProps?.visibleKeys]);
+
+  const scrollY = parseScrollDimension(scrollProp?.y);
+  const scrollX = parseScrollDimension(scrollProp?.x);
+  const scrollXNum =
+    scrollX == null
+      ? 0
+      : typeof scrollX === "number"
+        ? scrollX
+        : parseInt(String(scrollX), 10) || 0;
+  const hasScrollX = scrollX != null;
+
+  const columnLayout = useMemo(() => {
+    const items: { key: Key; width: number; fixed?: "left" | "right" }[] = [];
+    if (rowSelectionProp) {
+      items.push({
+        key: "__selection__",
+        width: SELECTION_COL_WIDTH,
+        fixed: rowSelectionProp.fixed,
+      });
+    }
+    visibleColumns.forEach((col, colIndex) => {
+      const key = getColumnKey(col, columns.indexOf(col));
+      const w = col.width ?? col.minWidth;
+      const num =
+        typeof w === "number"
+          ? w
+          : typeof w === "string" && /^\d+$/.test(String(w))
+            ? Number(w)
+            : 100;
+      items.push({ key, width: num, fixed: col.fixed });
+    });
+    return items;
+  }, [rowSelectionProp, visibleColumns, columns, getColumnKey]);
+
+  const { leftOffsets, rightOffsets } = useMemo(() => {
+    const left: number[] = [];
+    const right: number[] = [];
+    let leftAcc = 0;
+    for (let i = 0; i < columnLayout.length; i++) {
+      left[i] = leftAcc;
+      if (columnLayout[i].fixed === "left") leftAcc += columnLayout[i].width;
+    }
+    let rightAcc = 0;
+    for (let i = columnLayout.length - 1; i >= 0; i--) {
+      right[i] = rightAcc;
+      if (columnLayout[i].fixed === "right") rightAcc += columnLayout[i].width;
+    }
+    return { leftOffsets: left, rightOffsets: right };
+  }, [columnLayout]);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollPos, setScrollPos] = useState({
+    scrollLeft: 0,
+    scrollTop: 0,
+    scrollWidth: 0,
+    clientWidth: 0,
+  });
+
+  const hasScroll = scrollY != null || scrollX != null;
+
+  const handleScroll = useCallback(() => {
+    if (!hasScroll) return;
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    setScrollPos({
+      scrollLeft: el.scrollLeft,
+      scrollTop: el.scrollTop,
+      scrollWidth: el.scrollWidth,
+      clientWidth: el.clientWidth,
+    });
+  }, [scrollY, scrollX, hasScroll]);
+
+  useEffect(() => {
+    if (!hasScroll) return;
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const sync = () => {
+      setScrollPos({
+        scrollLeft: el.scrollLeft,
+        scrollTop: el.scrollTop,
+        scrollWidth: el.scrollWidth,
+        clientWidth: el.clientWidth,
+      });
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [hasScroll]);
+
+  const maxScrollLeft = Math.max(
+    0,
+    scrollPos.scrollWidth - scrollPos.clientWidth,
+  );
+  const hasHorizontalOverflow =
+    hasScrollX &&
+    scrollPos.scrollWidth > 0 &&
+    scrollPos.clientWidth > 0 &&
+    scrollPos.scrollWidth > scrollPos.clientWidth;
+  // --- 固定列：仅在有横向溢出时生效；滚动同步由同一 scroll 容器 + sticky 保证；表头 z-[2]、表体固定列 z-[1] 保证层级 ---
+  const showHeaderShadow = scrollY != null && scrollPos.scrollTop > 0;
+  const showLeftFixedShadow = scrollPos.scrollLeft > 0;
+  const showRightFixedShadow =
+    maxScrollLeft > 0 && scrollPos.scrollLeft < maxScrollLeft;
+
+  const fixedCellTransition = "box-shadow 0.2s ease";
+  const shadowLeft = "3px 0 5px -2px rgba(0,0,0,0.08)";
+  const shadowRight = "-2px 0 4px -2px rgba(0,0,0,0.08)";
+  const shadowLeftCell = "3px 0 5px -2px rgba(0,0,0,0.06)";
+  const shadowRightCell = "-2px 0 4px -2px rgba(0,0,0,0.06)";
 
   const [internalPagination, setInternalPagination] = useState({
     current:
@@ -443,15 +575,65 @@ export function CommonTable<T extends Record<string, any> = any>({
       </div>
 
       <div
-        className={`overflow-x-auto rounded-figma-card bg-figma-surface pt-1 pb-1 shadow-figma-small ${bordered ? "border border-figma-border" : ""}`}
+        ref={scrollContainerRef}
+        onScroll={hasScroll ? handleScroll : undefined}
+        className={`table-scroll-area min-w-0 w-full bg-figma-surface shadow-figma-small ${bordered ? "border border-figma-border" : ""} ${scrollY != null ? "overflow-y-auto overflow-x-auto min-h-0" : "overflow-x-auto"}`}
+        style={
+          scrollY != null
+            ? {
+                maxHeight:
+                  typeof scrollY === "number" ? `${scrollY}px` : scrollY,
+                minHeight: 0,
+              }
+            : undefined
+        }
       >
-        <table className={`-mt-1 -mb-1 w-full border-separate border-spacing-x-0 border-spacing-y-1 ${tableLayout}`}>
+        <table
+          className={`-mt-1 -mb-1 border-separate border-spacing-x-0 border-spacing-y-0 ${tableLayout} ${hasScrollX ? "table-fixed" : "w-full"}`}
+          style={
+            hasScrollX && scrollXNum > 0
+              ? {
+                  minWidth: `max(100%, ${scrollXNum}px)`,
+                  width: `max(100%, ${scrollXNum}px)`,
+                }
+              : undefined
+          }
+        >
           <thead>
-            <tr className="rounded-t-figma-table bg-figma-surface-alt">
+            <tr
+              className={`rounded-t-figma-table bg-figma-surface-alt transition-shadow duration-200 ease-out ${scrollY != null ? "sticky top-0 z-[2]" : ""}`}
+              style={
+                showHeaderShadow
+                  ? { boxShadow: "0 2px 8px -2px rgba(0,0,0,0.08)" }
+                  : undefined
+              }
+            >
               {rowSelectionProp && rowSelectionProp.type !== "radio" && (
                 <th
-                  className={`${borderR} ${borderB} ${rowSizeClass} text-left text-figma-paragraph text-figma-text-secondary`}
-                  style={{ width: 40 }}
+                  className={`${borderR} ${borderB} ${rowSizeClass} text-left text-figma-paragraph text-figma-text-secondary ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[2] bg-figma-surface-alt" : ""}`}
+                  style={{
+                    width: SELECTION_COL_WIDTH,
+                    minWidth: SELECTION_COL_WIDTH,
+                    transition:
+                      hasHorizontalOverflow && columnLayout[0]?.fixed
+                        ? fixedCellTransition
+                        : undefined,
+                    ...(hasHorizontalOverflow &&
+                    columnLayout[0]?.fixed === "left"
+                      ? {
+                          left: leftOffsets[0],
+                          boxShadow: showLeftFixedShadow ? shadowLeft : "none",
+                        }
+                      : hasHorizontalOverflow &&
+                          columnLayout[0]?.fixed === "right"
+                        ? {
+                            right: rightOffsets[0],
+                            boxShadow: showRightFixedShadow
+                              ? shadowRight
+                              : "none",
+                          }
+                        : {}),
+                  }}
                 >
                   <input
                     type="checkbox"
@@ -468,12 +650,36 @@ export function CommonTable<T extends Record<string, any> = any>({
               )}
               {rowSelectionProp && rowSelectionProp.type === "radio" && (
                 <th
-                  className={`${borderR} ${borderB} ${rowSizeClass} text-left text-figma-paragraph text-figma-text-secondary`}
-                  style={{ width: 40 }}
+                  className={`${borderR} ${borderB} ${rowSizeClass} text-left text-figma-paragraph text-figma-text-secondary ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[2] bg-figma-surface-alt" : ""}`}
+                  style={{
+                    width: SELECTION_COL_WIDTH,
+                    minWidth: SELECTION_COL_WIDTH,
+                    transition:
+                      hasHorizontalOverflow && columnLayout[0]?.fixed
+                        ? fixedCellTransition
+                        : undefined,
+                    ...(hasHorizontalOverflow &&
+                    columnLayout[0]?.fixed === "left"
+                      ? {
+                          left: leftOffsets[0],
+                          boxShadow: showLeftFixedShadow ? shadowLeft : "none",
+                        }
+                      : hasHorizontalOverflow &&
+                          columnLayout[0]?.fixed === "right"
+                        ? {
+                            right: rightOffsets[0],
+                            boxShadow: showRightFixedShadow
+                              ? shadowRight
+                              : "none",
+                          }
+                        : {}),
+                  }}
                 />
               )}
               {visibleColumns.map((col, colIndex) => {
                 const key = getColumnKey(col, columns.indexOf(col));
+                const layoutIndex = (rowSelectionProp ? 1 : 0) + colIndex;
+                const layout = columnLayout[layoutIndex];
                 const hasSorter = col.sorter != null;
                 const hasFilter = col.filters && col.filters.length > 0;
                 const currentOrder =
@@ -481,16 +687,39 @@ export function CommonTable<T extends Record<string, any> = any>({
                     ? sorter.order
                     : null;
                 const filterOpen = filterDropdownOpen === String(key);
+                const isFixedLeft =
+                  hasHorizontalOverflow && layout?.fixed === "left";
+                const isFixedRight =
+                  hasHorizontalOverflow && layout?.fixed === "right";
 
                 return (
                   <th
                     key={key.toString()}
-                    className={`${borderR} ${borderB} ${rowSizeClass} text-left text-figma-paragraph text-figma-text-secondary ${bordered ? "last:border-r-0" : ""}`}
-                    style={
-                      col.width
+                    className={`${borderR} ${borderB} ${rowSizeClass} text-left text-figma-paragraph text-figma-text-secondary ${bordered ? "last:border-r-0" : ""} ${isFixedLeft || isFixedRight ? "sticky z-[2] bg-figma-surface-alt" : ""}`}
+                    style={{
+                      ...(col.width
                         ? { width: col.width, minWidth: col.width }
-                        : undefined
-                    }
+                        : {}),
+                      transition:
+                        isFixedLeft || isFixedRight
+                          ? fixedCellTransition
+                          : undefined,
+                      ...(isFixedLeft
+                        ? {
+                            left: leftOffsets[layoutIndex],
+                            boxShadow: showLeftFixedShadow
+                              ? shadowLeft
+                              : "none",
+                          }
+                        : isFixedRight
+                          ? {
+                              right: rightOffsets[layoutIndex],
+                              boxShadow: showRightFixedShadow
+                                ? shadowRight
+                                : "none",
+                            }
+                          : {}),
+                    }}
                   >
                     <div className="flex items-center gap-1">
                       <span
@@ -606,7 +835,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                   colSpan={visibleColumns.length + (rowSelectionProp ? 1 : 0)}
                   className={`${borderB} py-8 text-center text-figma-paragraph text-figma-text-secondary`}
                 >
-                  加载中...
+                  {loadingText}
                 </td>
               </tr>
             ) : displayData.length === 0 ? (
@@ -615,7 +844,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                   colSpan={visibleColumns.length + (rowSelectionProp ? 1 : 0)}
                   className={`${borderB} py-8 text-center text-figma-paragraph text-figma-text-secondary`}
                 >
-                  暂无数据
+                  {emptyText}
                 </td>
               </tr>
             ) : (
@@ -628,7 +857,32 @@ export function CommonTable<T extends Record<string, any> = any>({
                     className={`group cursor-pointer bg-figma-surface-alt ${selected ? "bg-figma-primary/5" : ""}`}
                   >
                     {rowSelectionProp && rowSelectionProp.type !== "radio" && (
-                      <td className={`${borderR} ${borderB} bg-figma-surface px-3 py-3 group-hover:bg-gray-50`}>
+                      <td
+                        className={`${borderR} ${borderB} bg-figma-surface px-3 py-3 group-hover:bg-gray-50 ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[1] bg-figma-surface" : ""}`}
+                        style={{
+                          transition:
+                            hasHorizontalOverflow && columnLayout[0]?.fixed
+                              ? fixedCellTransition
+                              : undefined,
+                          ...(hasHorizontalOverflow &&
+                          columnLayout[0]?.fixed === "left"
+                            ? {
+                                left: leftOffsets[0],
+                                boxShadow: showLeftFixedShadow
+                                  ? shadowLeftCell
+                                  : "none",
+                              }
+                            : hasHorizontalOverflow &&
+                                columnLayout[0]?.fixed === "right"
+                              ? {
+                                  right: rightOffsets[0],
+                                  boxShadow: showRightFixedShadow
+                                    ? shadowRightCell
+                                    : "none",
+                                }
+                              : {}),
+                        }}
+                      >
                         <input
                           type="checkbox"
                           checked={selected}
@@ -640,7 +894,32 @@ export function CommonTable<T extends Record<string, any> = any>({
                       </td>
                     )}
                     {rowSelectionProp && rowSelectionProp.type === "radio" && (
-                      <td className={`${borderR} ${borderB} bg-figma-surface px-3 py-3 group-hover:bg-gray-50`}>
+                      <td
+                        className={`${borderR} ${borderB} bg-figma-surface px-3 py-3 group-hover:bg-gray-50 ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[1] bg-figma-surface" : ""}`}
+                        style={{
+                          transition:
+                            hasHorizontalOverflow && columnLayout[0]?.fixed
+                              ? fixedCellTransition
+                              : undefined,
+                          ...(hasHorizontalOverflow &&
+                          columnLayout[0]?.fixed === "left"
+                            ? {
+                                left: leftOffsets[0],
+                                boxShadow: showLeftFixedShadow
+                                  ? shadowLeftCell
+                                  : "none",
+                              }
+                            : hasHorizontalOverflow &&
+                                columnLayout[0]?.fixed === "right"
+                              ? {
+                                  right: rightOffsets[0],
+                                  boxShadow: showRightFixedShadow
+                                    ? shadowRightCell
+                                    : "none",
+                                }
+                              : {}),
+                        }}
+                      >
                         <input
                           type="radio"
                           name="table-row-select"
@@ -657,6 +936,12 @@ export function CommonTable<T extends Record<string, any> = any>({
                     )}
                     {visibleColumns.map((col, colIndex) => {
                       const colKey = getColumnKey(col, columns.indexOf(col));
+                      const layoutIndex = (rowSelectionProp ? 1 : 0) + colIndex;
+                      const layout = columnLayout[layoutIndex];
+                      const isFixedLeft =
+                        hasHorizontalOverflow && layout?.fixed === "left";
+                      const isFixedRight =
+                        hasHorizontalOverflow && layout?.fixed === "right";
                       const value = getCellValue(
                         record,
                         col.dataIndex as string,
@@ -667,10 +952,29 @@ export function CommonTable<T extends Record<string, any> = any>({
                       return (
                         <td
                           key={colKey.toString()}
-                          className={`${borderR} ${borderB} bg-figma-surface ${cellSizeClass} text-figma-paragraph text-figma-text-primary group-hover:bg-gray-50 ${bordered ? "last:border-r-0" : ""}`}
-                          style={
-                            col.align ? { textAlign: col.align } : undefined
-                          }
+                          className={`${borderR} ${borderB} bg-figma-surface ${cellSizeClass} text-figma-paragraph text-figma-text-primary group-hover:bg-gray-50 ${bordered ? "last:border-r-0" : ""} ${isFixedLeft || isFixedRight ? "sticky z-[1] bg-figma-surface" : ""}`}
+                          style={{
+                            ...(col.align ? { textAlign: col.align } : {}),
+                            transition:
+                              isFixedLeft || isFixedRight
+                                ? fixedCellTransition
+                                : undefined,
+                            ...(isFixedLeft
+                              ? {
+                                  left: leftOffsets[layoutIndex],
+                                  boxShadow: showLeftFixedShadow
+                                    ? shadowLeftCell
+                                    : "none",
+                                }
+                              : isFixedRight
+                                ? {
+                                    right: rightOffsets[layoutIndex],
+                                    boxShadow: showRightFixedShadow
+                                      ? shadowRightCell
+                                      : "none",
+                                  }
+                                : {}),
+                          }}
                         >
                           {content}
                         </td>

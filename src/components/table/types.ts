@@ -75,6 +75,8 @@ export interface RowSelection<T = any> {
   type?: 'checkbox' | 'radio';
   selectedRowKeys?: Key[];
   preserveSelectedRowKeys?: boolean;
+  /** 选择列固定方向，需配合 scroll.x 使用 */
+  fixed?: 'left' | 'right';
   onChange?: (selectedRowKeys: Key[], selectedRows: T[]) => void;
 }
 
@@ -83,7 +85,11 @@ export interface CommonColumnType<T = any> {
   dataIndex?: string;
   title?: React.ReactNode;
   width?: number | string;
+  /** 最小宽度，列宽自适应时与 width 配合使用 */
+  minWidth?: number | string;
   align?: 'left' | 'right' | 'center';
+  /** 列固定方向，需配合 scroll.x 使用；仅在有横向溢出时生效 */
+  fixed?: 'left' | 'right';
   sorter?: boolean | ((a: T, b: T) => number);
   defaultSortOrder?: SortOrder;
   sortDirections?: SortOrder[];
@@ -92,6 +98,13 @@ export interface CommonColumnType<T = any> {
   onFilter?: (value: React.Key, record: T) => boolean;
   ellipsis?: boolean;
   render?: (value: any, record: T, index: number) => React.ReactNode;
+  /** 表头分组：子列（与 fixed 兼容时，以首个子列 fixed 为准） */
+  children?: CommonColumnType<T>[];
+}
+
+export interface TableLocale {
+  emptyText?: React.ReactNode;
+  loadingText?: React.ReactNode;
 }
 
 export interface ColumnSettingsProps<T = any> {
@@ -125,6 +138,10 @@ export interface CommonTableProps<T = any> {
   onSearchChange?: (value: string) => void;
   filterBuilderProps?: FilterBuilderProps;
   columnSettingsProps?: Partial<ColumnSettingsProps<T>>;
+  /** 表头/列固定：y 为表头固定高度，x 为横向滚动宽度（列固定需配合使用） */
+  scroll?: { x?: number | string; y?: number | string };
+  /** 文案：空数据、加载中（边界情况：空数据时单行 colSpan 横跨全列，无固定列样式） */
+  locale?: TableLocale;
   onChange?: (
     pagination: CommonTableOnChangePagination,
     filters: TableFilters,
