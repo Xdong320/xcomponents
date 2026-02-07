@@ -26,6 +26,20 @@ export interface FilterCondition {
   value: any;
 }
 
+/** date 类型 value：before/after + 日期 + 时间 */
+export interface FilterConditionDateValue {
+  when?: 'before' | 'after';
+  date?: string; // MM/DD/YYYY
+  time?: string; // HH:mm
+}
+
+/** 已保存的筛选组合（localStorage） */
+export interface SavedFilterPreset {
+  id: string;
+  name: string;
+  conditions: FilterCondition[];
+}
+
 export interface FilterBuilderProps {
   id: string;
   fields: FilterFieldMeta[];

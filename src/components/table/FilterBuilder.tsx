@@ -1,61 +1,80 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   FilterBuilderProps,
   FilterCondition,
+  FilterConditionDateValue,
   FilterFieldMeta,
+  SavedFilterPreset,
 } from "./types";
 
-function buildStorageKey(id: string) {
-  return `filter_builder_${id}`;
+const PRESETS_KEY_PREFIX = "filter_builder_presets_";
+
+function getPresetsKey(id: string) {
+  return `${PRESETS_KEY_PREFIX}${id}`;
 }
 
-function loadSavedConditions(id: string): FilterCondition[] | null {
-  if (typeof window === "undefined") return null;
+function loadPresets(id: string): SavedFilterPreset[] {
+  if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(buildStorageKey(id));
-    if (!raw) return null;
-    return JSON.parse(raw) as FilterCondition[];
+    const raw = window.localStorage.getItem(getPresetsKey(id));
+    if (!raw) return [];
+    return JSON.parse(raw) as SavedFilterPreset[];
   } catch {
-    return null;
+    return [];
   }
 }
 
-function saveConditions(id: string, conditions: FilterCondition[]) {
+function savePresets(id: string, presets: SavedFilterPreset[]) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(
-      buildStorageKey(id),
-      JSON.stringify(conditions),
-    );
+    window.localStorage.setItem(getPresetsKey(id), JSON.stringify(presets));
   } catch {
     // ignore
   }
 }
 
 function createEmptyCondition(fieldMeta: FilterFieldMeta): FilterCondition {
-  const defaultOperator =
-    fieldMeta.operators && fieldMeta.operators.length > 0
-      ? fieldMeta.operators[0]
-      : "=";
-
+  const ops = getOperatorsForType(fieldMeta.type);
   return {
     field: fieldMeta.field,
     label: fieldMeta.label,
     type: fieldMeta.type,
-    operator: defaultOperator,
-    value: undefined,
+    operator: ops[0] ?? "=",
+    value: fieldMeta.type === "date" || fieldMeta.type === "dateRange"
+      ? { when: "after", date: "", time: "00:00" }
+      : undefined,
   };
+}
+
+function getOperatorsForType(type: FilterFieldMeta["type"]): string[] {
+  switch (type) {
+    case "date":
+    case "dateRange":
+      return ["before", "after"];
+    case "text":
+      return ["包含", "等于", "不等于", "开头是", "结尾是"];
+    case "number":
+      return ["大于", "小于", "等于", "大于等于", "小于等于"];
+    default:
+      return ["=", "!=", "包含"];
+  }
+}
+
+function defaultTagLabel(c: FilterCondition): string {
+  if (c.type === "date" || c.type === "dateRange") {
+    const v = c.value as FilterConditionDateValue | undefined;
+    if (!v) return `${c.label} ${c.operator}`;
+    const when = v.when === "before" ? "before" : "after";
+    const d = v.date || "";
+    const t = v.time || "00:00";
+    return `${c.label} ${when} ${d} ${t}`.trim();
+  }
+  const value = c.value === undefined || c.value === "" ? "" : String(c.value);
+  return value ? `${c.label} ${c.operator} ${value}` : `${c.label} ${c.operator}`;
 }
 
 interface FilterBuilderInternalProps extends FilterBuilderProps {
   className?: string;
-}
-
-function defaultTagLabel(c: FilterCondition): string {
-  const value = c.value === undefined || c.value === "" ? "" : String(c.value);
-  return value
-    ? `${c.label} ${c.operator} ${value}`
-    : `${c.label} ${c.operator}`;
 }
 
 export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
@@ -67,159 +86,118 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
   variant = "bar",
   formatConditionLabel = defaultTagLabel,
 }) => {
-  const [conditions, setConditions] = useState<FilterCondition[]>(() => {
-    if (value && value.length > 0) return value;
-    const saved = loadSavedConditions(id);
-    return saved ?? [];
-  });
+  const [conditions, setConditions] = useState<FilterCondition[]>(() =>
+    value?.length ? value : [],
+  );
+  const [presets, setPresets] = useState<SavedFilterPreset[]>(() =>
+    loadPresets(id),
+  );
+  const [addOpen, setAddOpen] = useState(false);
+  const [conditionDialog, setConditionDialog] = useState<{
+    condition: FilterCondition;
+    fieldMeta: FilterFieldMeta;
+  } | null>(null);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [saveName, setSaveName] = useState("");
 
   useEffect(() => {
-    if (value) {
-      setConditions(value);
-    }
+    if (value) setConditions(value);
   }, [value]);
 
-  const availableFields = useMemo(
-    () => fields.filter((f) => !conditions.some((c) => c.field === f.field)),
-    [fields, conditions],
+  useEffect(() => {
+    setPresets(loadPresets(id));
+  }, [id]);
+
+  const applyConditions = useCallback(
+    (next: FilterCondition[]) => {
+      setConditions(next);
+      onChange?.(next);
+    },
+    [onChange],
   );
 
-  const handleApply = () => {
-    onChange?.(conditions);
-  };
+  const removeCondition = useCallback(
+    (index: number) => {
+      setConditions((prev) => {
+        const next = prev.filter((_, i) => i !== index);
+        onChange?.(next);
+        return next;
+      });
+    },
+    [onChange],
+  );
 
-  const handleSave = () => {
-    saveConditions(id, conditions);
-  };
-
-  const handleLoadSaved = () => {
-    const saved = loadSavedConditions(id);
-    if (saved) {
-      setConditions(saved);
-      onChange?.(saved);
-    }
-  };
-
-  const updateCondition = (index: number, patch: Partial<FilterCondition>) => {
-    setConditions((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], ...patch };
-      return next;
-    });
-  };
-
-  const removeCondition = (index: number) => {
-    setConditions((prev) => {
-      const next = prev.filter((_, i) => i !== index);
-      onChange?.(next);
-      return next;
-    });
-  };
-
-  const [addOpen, setAddOpen] = useState(false);
-  const [editing, setEditing] = useState<FilterCondition | null>(null);
-
-  const handleAddField = (fieldName: string) => {
+  const handleSelectField = useCallback((fieldName: string) => {
     const meta = fields.find((f) => f.field === fieldName);
     if (!meta) return;
-    setEditing(createEmptyCondition(meta));
     setAddOpen(false);
-  };
+    setConditionDialog({
+      condition: createEmptyCondition(meta),
+      fieldMeta: meta,
+    });
+  }, [fields]);
 
-  const commitEditing = () => {
-    if (!editing) return;
+  const handleSelectSavedPreset = useCallback(
+    (preset: SavedFilterPreset) => {
+      setConditions(preset.conditions);
+      onChange?.(preset.conditions);
+      setAddOpen(false);
+    },
+    [onChange],
+  );
+
+  const handleDeletePreset = useCallback(
+    (e: React.MouseEvent, presetId: string) => {
+      e.stopPropagation();
+      const next = presets.filter((p) => p.id !== presetId);
+      setPresets(next);
+      savePresets(id, next);
+    },
+    [id, presets],
+  );
+
+  const handleApplyCondition = useCallback(() => {
+    if (!conditionDialog) return;
     setConditions((prev) => {
-      const next = [...prev, editing];
+      const next = [...prev, conditionDialog.condition];
       onChange?.(next);
       return next;
     });
-    setEditing(null);
-  };
+    setConditionDialog(null);
+  }, [conditionDialog, onChange]);
 
-  const renderValueInput = (
-    condition: FilterCondition,
-    index: number,
-  ): React.ReactNode => {
-    switch (condition.type) {
-      case "number":
-        return (
-          <input
-            type="number"
-            value={condition.value ?? ""}
-            onChange={(e) =>
-              updateCondition(index, {
-                value:
-                  e.target.value === "" ? undefined : Number(e.target.value),
-              })
-            }
-            className="h-8 w-32 rounded border border-slate-200 px-2 text-xs outline-none focus:border-blue-500"
-          />
-        );
-      case "select": {
-        const meta = fields.find((f) => f.field === condition.field);
-        return (
-          <select
-            value={condition.value ?? ""}
-            onChange={(e) =>
-              updateCondition(index, {
-                value: e.target.value === "" ? undefined : e.target.value,
-              })
-            }
-            className="h-8 w-32 rounded border border-slate-200 px-2 text-xs outline-none focus:border-blue-500"
-          >
-            <option value="">请选择</option>
-            {meta?.options?.map((opt) => (
-              <option key={String(opt.value)} value={opt.value as any}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        );
-      }
-      case "boolean":
-        return (
-          <select
-            value={
-              typeof condition.value === "boolean"
-                ? String(condition.value)
-                : ""
-            }
-            onChange={(e) =>
-              updateCondition(index, {
-                value:
-                  e.target.value === "" ? undefined : e.target.value === "true",
-              })
-            }
-            className="h-8 w-24 rounded border border-slate-200 px-2 text-xs outline-none focus:border-blue-500"
-          >
-            <option value="">全部</option>
-            <option value="true">是</option>
-            <option value="false">否</option>
-          </select>
-        );
-      case "date":
-      case "dateRange":
-      case "text":
-      default:
-        return (
-          <input
-            type="text"
-            value={condition.value ?? ""}
-            onChange={(e) =>
-              updateCondition(index, {
-                value: e.target.value === "" ? undefined : e.target.value,
-              })
-            }
-            className="h-8 w-40 rounded border border-slate-200 px-2 text-xs outline-none focus:border-blue-500"
-          />
-        );
-    }
-  };
+  const handleSavePreset = useCallback(() => {
+    if (!saveName.trim()) return;
+    const newPreset: SavedFilterPreset = {
+      id: `preset_${Date.now()}`,
+      name: saveName.trim(),
+      conditions: [...conditions],
+    };
+    const next = [...presets, newPreset];
+    setPresets(next);
+    savePresets(id, next);
+    setSaveName("");
+    setSaveModalOpen(false);
+  }, [id, conditions, presets, saveName]);
 
-  if (variant === "bar") {
+  const tagsWrapClass = "flex min-w-0 flex-1 flex-wrap items-center gap-2";
+
+  if (variant !== "bar") {
     return (
       <div
-        className={`flex items-center gap-3 rounded-figma-card border border-figma-border bg-figma-surface px-2.5 py-1 text-figma-paragraph text-figma-text-primary ${className ?? ""}`}
+        className={`flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm ${className ?? ""}`}
+      >
+        <div className="text-figma-paragraph text-figma-text-secondary">
+          筛选条件（请使用 variant="bar"）
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div
+        className={`flex flex-wrap items-center gap-2 rounded-figma-card border-b border-figma-border bg-figma-surface px-2.5 py-2 text-figma-paragraph text-figma-text-primary ${className ?? ""}`}
       >
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-figma-surface-alt text-figma-text-secondary">
           <span className="flex flex-col gap-0.5">
@@ -228,17 +206,18 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
             <span className="block h-0.5 w-1.5 rounded bg-current opacity-60" />
           </span>
         </span>
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+        <div className={tagsWrapClass}>
           {conditions.map((c, index) => (
             <span
               key={`${c.field}-${index}`}
-              className="inline-flex items-center gap-1 rounded-figma-tag border border-figma-border bg-figma-surface px-2.5 py-1 text-figma-paragraph text-figma-text-primary shadow-figma-small"
+              className="inline-flex items-center gap-1 rounded-figma-tag border border-figma-border bg-figma-surface-alt px-2.5 py-1 text-figma-paragraph text-figma-text-primary shadow-figma-small"
             >
               {formatConditionLabel(c)}
               <button
                 type="button"
                 onClick={() => removeCondition(index)}
                 className="ml-0.5 text-figma-text-secondary hover:text-figma-text-primary"
+                aria-label="移除"
               >
                 ×
               </button>
@@ -250,150 +229,363 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
             </span>
           )}
         </div>
-        <div className="relative shrink-0">
+        <div className="relative flex shrink-0 items-center gap-1">
           <button
             type="button"
             onClick={() => setAddOpen((v) => !v)}
             className="flex h-6 w-6 items-center justify-center rounded-full border border-figma-border bg-figma-surface text-figma-text-secondary shadow-figma-small hover:bg-figma-surface-alt hover:text-figma-text-primary"
+            aria-label="添加筛选"
           >
-            +
+            ＋
           </button>
           {addOpen && (
             <>
               <div
-                className="fixed inset-0 z-10"
+                className="fixed inset-0 z-20"
                 aria-hidden
                 onClick={() => setAddOpen(false)}
               />
-              <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-figma-table border border-figma-border bg-figma-surface p-2 text-figma-paragraph shadow-figma-small">
-                <div className="mb-1 px-2 py-1 text-figma-label-sm text-figma-text-secondary">
-                  添加条件
+              <div className="absolute right-0 top-full z-30 mt-1 max-h-72 w-56 overflow-auto rounded-figma-table border border-figma-border bg-figma-surface py-2 text-figma-paragraph shadow-figma-small">
+                <div className="mb-1 px-3 py-1 text-figma-label-sm text-figma-text-secondary">
+                  已保存的筛选
                 </div>
-                {availableFields.length === 0 && (
-                  <div className="px-2 py-1 text-figma-paragraph text-figma-text-secondary">
-                    已无可用字段
+                {presets.length === 0 && (
+                  <div className="px-3 py-1.5 text-figma-paragraph text-figma-text-secondary">
+                    暂无已保存
                   </div>
                 )}
-                {availableFields.map((field) => (
+                {presets.map((p) => (
+                  <div
+                    key={p.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleSelectSavedPreset(p)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleSelectSavedPreset(p)
+                    }
+                    className="flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-left text-figma-paragraph text-figma-text-primary hover:bg-figma-surface-alt"
+                  >
+                    <span className="min-w-0 truncate">{p.name}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeletePreset(e, p.id)}
+                      className="shrink-0 rounded p-0.5 text-figma-text-secondary hover:bg-figma-border hover:text-figma-text-primary"
+                      aria-label="删除"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+                <div className="my-1 border-t border-figma-border" />
+                <div className="mb-1 px-3 py-1 text-figma-label-sm text-figma-text-secondary">
+                  表格字段
+                </div>
+                {fields.map((field) => (
                   <button
                     key={field.field}
                     type="button"
-                    onClick={() => handleAddField(field.field)}
-                    className="block w-full rounded px-2 py-1.5 text-left text-figma-paragraph text-figma-text-primary hover:bg-figma-surface-alt"
+                    onClick={() => handleSelectField(field.field)}
+                    className="block w-full px-3 py-1.5 text-left text-figma-paragraph text-figma-text-primary hover:bg-figma-surface-alt"
                   >
                     {field.label}
                   </button>
                 ))}
-                <button
-                  type="button"
-                  onClick={handleLoadSaved}
-                  className="mt-1 block w-full rounded px-2 py-1.5 text-left text-figma-paragraph text-figma-primary hover:bg-figma-surface-alt"
-                >
-                  使用已保存条件
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  className="mt-1 block w-full rounded px-2 py-1.5 text-left text-figma-paragraph text-figma-text-secondary hover:bg-figma-surface-alt"
-                >
-                  保存当前条件
-                </button>
               </div>
             </>
           )}
+          <button
+            type="button"
+            onClick={() => setSaveModalOpen(true)}
+            className="flex h-6 w-6 items-center justify-center rounded-figma-tag border border-figma-border bg-figma-surface text-figma-text-secondary shadow-figma-small hover:bg-figma-surface-alt hover:text-figma-text-primary"
+            aria-label="保存筛选"
+            title="保存当前筛选条件"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+          </button>
         </div>
       </div>
-    );
-  }
+
+      {/* 保存筛选弹窗 */}
+      {saveModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div
+            className="w-96 rounded-figma-table border border-figma-border bg-figma-surface p-4 shadow-figma-small"
+            role="dialog"
+            aria-labelledby="save-filter-title"
+          >
+            <h3 id="save-filter-title" className="mb-3 text-figma-label-md text-figma-text-primary">
+              保存筛选
+            </h3>
+            <label className="mb-2 block text-figma-paragraph text-figma-text-secondary">
+              Filter label<span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={saveName}
+              onChange={(e) => setSaveName(e.target.value)}
+              placeholder="例：会话时长80-120s"
+              className="mb-4 w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none placeholder:text-figma-text-secondary focus:border-figma-primary"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSaveModalOpen(false);
+                  setSaveName("");
+                }}
+                className="rounded-figma-btn border border-figma-border px-3 py-1.5 text-figma-paragraph text-figma-text-secondary hover:bg-figma-surface-alt"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={handleSavePreset}
+                disabled={!saveName.trim()}
+                className="rounded-figma-btn bg-figma-primary px-3 py-1.5 text-figma-paragraph font-medium text-white hover:opacity-90 disabled:opacity-50"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 按类型弹出的条件编辑弹窗 */}
+      {conditionDialog && (
+        <ConditionDialog
+          condition={conditionDialog.condition}
+          fieldMeta={conditionDialog.fieldMeta}
+          onApply={handleApplyCondition}
+          onClose={() => setConditionDialog(null)}
+          onUpdate={(patch) =>
+            setConditionDialog((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    condition: { ...prev.condition, ...patch },
+                  }
+                : null,
+            )
+          }
+        />
+      )}
+    </>
+  );
+};
+
+function ConditionDialog({
+  condition,
+  fieldMeta,
+  onApply,
+  onClose,
+  onUpdate,
+}: {
+  condition: FilterCondition;
+  fieldMeta: FilterFieldMeta;
+  onApply: () => void;
+  onClose: () => void;
+  onUpdate: (patch: Partial<FilterCondition>) => void;
+}) {
+  const isDate = condition.type === "date" || condition.type === "dateRange";
+  const isNumber = condition.type === "number";
+  const isText = condition.type === "text";
+  const isSelect = condition.type === "select";
+  const isBoolean = condition.type === "boolean";
+  const dateValue = (condition.value as FilterConditionDateValue) || { when: "after", date: "", time: "00:00" };
 
   return (
-    <div
-      className={`flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition-shadow duration-200 hover:shadow-md ${className ?? ""}`}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <span className="font-medium text-slate-700">筛选条件</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+      <div
+        className="w-[320px] rounded-figma-table border border-figma-border bg-figma-surface p-4 shadow-figma-small"
+        role="dialog"
+        aria-labelledby="condition-dialog-title"
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <h3 id="condition-dialog-title" className="text-figma-label-md text-figma-text-primary">
+            {condition.label}
+          </h3>
           <button
             type="button"
-            onClick={handleLoadSaved}
-            className="text-[11px] text-blue-500 hover:underline"
+            onClick={onClose}
+            className="rounded p-1 text-figma-text-secondary hover:bg-figma-surface-alt hover:text-figma-text-primary"
+            aria-label="关闭"
           >
-            使用已保存条件
+            ×
           </button>
         </div>
-        <div className="flex items-center gap-2">
-          <select
-            className="h-7 min-w-[120px] rounded border border-slate-200 bg-white px-2 text-xs text-slate-600 outline-none"
-            value=""
-            onChange={(e) => {
-              if (e.target.value) {
-                handleAddField(e.target.value);
-                e.target.value = "";
+
+        {isDate && (
+          <>
+            <div className="mb-2">
+              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">before/after</label>
+              <select
+                value={dateValue.when ?? "after"}
+                onChange={(e) =>
+                  onUpdate({
+                    value: {
+                      ...dateValue,
+                      when: e.target.value as "before" | "after",
+                    },
+                  })
+                }
+                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+              >
+                <option value="before">before</option>
+                <option value="after">after</option>
+              </select>
+            </div>
+            <div className="mb-2">
+              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">日期 (MM/DD/YYYY)</label>
+              <input
+                type="date"
+                value={dateValue.date ?? ""}
+                onChange={(e) =>
+                  onUpdate({
+                    value: { ...dateValue, date: e.target.value },
+                  })
+                }
+                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+              />
+            </div>
+            <div className="mb-3">
+              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">时间</label>
+              <input
+                type="time"
+                value={dateValue.time ?? "00:00"}
+                onChange={(e) =>
+                  onUpdate({
+                    value: { ...dateValue, time: e.target.value },
+                  })
+                }
+                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+              />
+            </div>
+          </>
+        )}
+
+        {isNumber && (
+          <>
+            <div className="mb-2">
+              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">操作符</label>
+              <select
+                value={condition.operator}
+                onChange={(e) => onUpdate({ operator: e.target.value })}
+                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+              >
+                {getOperatorsForType("number").map((op) => (
+                  <option key={op} value={op}>{op}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-3">
+              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">值</label>
+              <input
+                type="number"
+                value={condition.value ?? ""}
+                onChange={(e) =>
+                  onUpdate({
+                    value: e.target.value === "" ? undefined : Number(e.target.value),
+                  })
+                }
+                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+              />
+            </div>
+          </>
+        )}
+
+        {isText && (
+          <>
+            <div className="mb-2">
+              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">操作符</label>
+              <select
+                value={condition.operator}
+                onChange={(e) => onUpdate({ operator: e.target.value })}
+                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+              >
+                {(fieldMeta.operators ?? getOperatorsForType("text")).map((op) => (
+                  <option key={op} value={op}>{op}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-3">
+              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">值</label>
+              <input
+                type="text"
+                value={condition.value ?? ""}
+                onChange={(e) => onUpdate({ value: e.target.value || undefined })}
+                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+              />
+            </div>
+          </>
+        )}
+
+        {isSelect && (
+          <>
+            <div className="mb-2">
+              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">操作符</label>
+              <select
+                value={condition.operator}
+                onChange={(e) => onUpdate({ operator: e.target.value })}
+                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+              >
+                {(fieldMeta.operators ?? ["="]).map((op) => (
+                  <option key={op} value={op}>{op}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-3">
+              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">值</label>
+              <select
+                value={condition.value ?? ""}
+                onChange={(e) => onUpdate({ value: e.target.value === "" ? undefined : e.target.value })}
+                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+              >
+                <option value="">请选择</option>
+                {fieldMeta.options?.map((opt) => (
+                  <option key={String(opt.value)} value={String(opt.value)}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+          </>
+        )}
+
+        {isBoolean && (
+          <div className="mb-3">
+            <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">值</label>
+            <select
+              value={condition.value === undefined ? "" : String(condition.value)}
+              onChange={(e) =>
+                onUpdate({
+                  value: e.target.value === "" ? undefined : e.target.value === "true",
+                })
               }
-            }}
-          >
-            <option value="">添加条件</option>
-            {availableFields.map((field) => (
-              <option key={field.field} value={field.field}>
-                {field.label}
-              </option>
-            ))}
-          </select>
+              className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+            >
+              <option value="">全部</option>
+              <option value="true">是</option>
+              <option value="false">否</option>
+            </select>
+          </div>
+        )}
+
+        <div className="flex justify-end">
           <button
             type="button"
-            onClick={handleSave}
-            className="h-7 rounded border border-slate-200 bg-slate-50 px-3 text-xs text-slate-600 hover:bg-slate-100"
-          >
-            保存条件
-          </button>
-          <button
-            type="button"
-            onClick={handleApply}
-            className="h-7 rounded bg-blue-500 px-3 text-xs font-medium text-white hover:bg-blue-600"
+            onClick={onApply}
+            className="rounded-figma-btn bg-figma-primary px-4 py-2 text-figma-paragraph font-medium text-white hover:opacity-90"
           >
             应用
           </button>
         </div>
       </div>
-
-      {conditions.length > 0 && (
-        <div className="flex flex-col gap-1">
-          {conditions.map((condition, index) => (
-            <div
-              key={`${condition.field}-${index}`}
-              className="flex items-center gap-2 rounded bg-slate-50 px-2 py-1 text-xs transition-opacity duration-150"
-            >
-              <span className="min-w-[80px] text-slate-700">
-                {condition.label}
-              </span>
-              <select
-                className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-600 outline-none"
-                value={condition.operator}
-                onChange={(e) =>
-                  updateCondition(index, { operator: e.target.value })
-                }
-              >
-                {(
-                  fields.find((f) => f.field === condition.field)
-                    ?.operators ?? ["=", "!=", "contains"]
-                )?.map((op) => (
-                  <option key={op} value={op}>
-                    {op}
-                  </option>
-                ))}
-              </select>
-              {renderValueInput(condition, index)}
-              <button
-                type="button"
-                onClick={() => removeCondition(index)}
-                className="ml-1 h-6 w-6 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-700"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
-};
+}

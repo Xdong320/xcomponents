@@ -11,8 +11,10 @@ export type {
   TableFilters,
   FilterBuilderProps,
   FilterCondition,
+  FilterConditionDateValue,
   FilterFieldMeta,
   FilterFieldType,
+  SavedFilterPreset,
   ColumnSettingsProps,
   Key,
 } from './types';

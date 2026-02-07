@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   CommonTable,
   type CommonColumnType,
   type FilterCondition,
+  type FilterConditionDateValue,
   type FilterFieldMeta,
   type Key,
 } from "../components/table";
@@ -85,6 +86,12 @@ const filterFields: FilterFieldMeta[] = [
     label: "会话轮次",
     type: "text",
     operators: ["=", "包含"],
+  },
+  {
+    field: "startTime",
+    label: "会话开始时间",
+    type: "date",
+    operators: ["before", "after"],
   },
 ];
 
@@ -211,7 +218,96 @@ export function TableDemo() {
 
   const handleFilterChange = useCallback((conditions: FilterCondition[]) => {
     setFilterConditions(conditions);
-    console.log("FilterBuilder onChange", conditions);
+  }, []);
+
+  const filteredData = useMemo(() => {
+    if (!filterConditions.length) return demoData;
+    return demoData.filter((record) => {
+      return filterConditions.every((c) => {
+        const recordVal = (record as unknown as Record<string, unknown>)[
+          c.field
+        ];
+        if (c.type === "number") {
+          const num = Number(recordVal);
+          const v = Number(c.value);
+          if (Number.isNaN(v)) return true;
+          switch (c.operator) {
+            case ">":
+              return num > v;
+            case "<":
+              return num < v;
+            case ">=":
+              return num >= v;
+            case "<=":
+              return num <= v;
+            case "等于":
+              return num === v;
+            default:
+              return true;
+          }
+        }
+        if (c.type === "text") {
+          const s = String(recordVal ?? "");
+          const v = String(c.value ?? "");
+          switch (c.operator) {
+            case "包含":
+              return s.includes(v);
+            case "等于":
+              return s === v;
+            case "不等于":
+              return s !== v;
+            case "开头是":
+              return s.startsWith(v);
+            case "结尾是":
+              return s.endsWith(v);
+            default:
+              return true;
+          }
+        }
+        if (c.type === "date" || c.type === "dateRange") {
+          const v = c.value as FilterConditionDateValue | undefined;
+          if (!v?.date) return true;
+          const recordStr = String(recordVal ?? "").trim();
+          const recordTs = Number.isNaN(
+            Date.parse(recordStr.replace(/\./g, "-").replace(" ", "T")),
+          )
+            ? 0
+            : new Date(
+                recordStr.replace(/\./g, "-").replace(" ", "T") + ":00",
+              ).getTime();
+          const condTime = (v.time || "00:00").split(":");
+          const condTs = new Date(
+            `${v.date}T${condTime[0]}:${condTime[1] || "00"}:00`,
+          ).getTime();
+          if (v.when === "before") return recordTs < condTs;
+          return recordTs > condTs;
+        }
+        if (c.type === "select") {
+          return String(recordVal) === String(c.value);
+        }
+        if (c.type === "boolean") {
+          return recordVal === c.value;
+        }
+        return true;
+      });
+    });
+  }, [filterConditions]);
+
+  const formatFilterLabel = useCallback((c: FilterCondition) => {
+    if (c.type === "date" || c.type === "dateRange") {
+      const v = c.value as FilterConditionDateValue | undefined;
+      if (!v) return `${c.label} ${c.operator}`;
+      const when = v.when === "before" ? "before" : "after";
+      const d = v.date || "";
+      const t = v.time || "00:00";
+      return `${c.label} ${when} ${d} ${t}`.trim();
+    }
+    const value =
+      c.value === undefined || c.value === "" ? "" : String(c.value);
+    const suffix = c.type === "number" ? "s" : "";
+    return value
+      ? `${c.label} ${c.operator} ${value}${suffix}`
+      : `${c.label} ${c.operator}`;
   }, []);
 
   return (
@@ -223,7 +319,7 @@ export function TableDemo() {
         <CommonTable<SessionRecord>
           title="会话列表"
           columns={columns}
-          dataSource={demoData}
+          dataSource={filteredData}
           rowKey="key"
           searchPlaceholder="搜索"
           pagination={{
@@ -244,10 +340,7 @@ export function TableDemo() {
             value: filterConditions,
             onChange: handleFilterChange,
             variant: "bar",
-            formatConditionLabel: (c) =>
-              c.value != null && c.value !== ""
-                ? `${c.label} ${c.operator} ${c.value}${c.type === "number" ? "s" : ""}`
-                : `${c.label} ${c.operator}`,
+            formatConditionLabel: formatFilterLabel,
           }}
           columnSettingsProps={{
             allColumns: columns,
