@@ -5,6 +5,7 @@ export type {
   CommonTableProps,
   CommonColumnType,
   PaginationConfig,
+  PaginationRenderProps,
   RowSelection,
   SorterResult,
   SortOrder,

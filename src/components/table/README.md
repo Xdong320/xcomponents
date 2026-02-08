@@ -11,7 +11,7 @@
 | `CommonTable` | 主表格组件 |
 | `FilterBuilder` | 筛选条件组件（标签条 + 弹窗） |
 | `ColumnSettings` | 列显示/隐藏设置 |
-| `CommonTableProps`, `CommonColumnType`, `PaginationConfig`, `RowSelection`, `SorterResult`, `SortOrder`, `TableFilters`, `TableLocale` | 表格相关类型 |
+| `CommonTableProps`, `CommonColumnType`, `PaginationConfig`, `PaginationRenderProps`, `RowSelection`, `SorterResult`, `SortOrder`, `TableFilters`, `TableLocale` | 表格相关类型 |
 | `FilterBuilderProps`, `FilterCondition`, `FilterConditionDateValue`, `FilterFieldMeta`, `FilterFieldType`, `SavedFilterPreset` | 筛选相关类型 |
 | `ColumnSettingsProps`, `Key` | 列设置与通用类型 |
 
@@ -46,7 +46,7 @@ const columns: CommonColumnType<Record>[] = [
 | `columns` | `CommonColumnType<T>[]` | 列配置 |
 | `dataSource` | `T[]` | 数据源 |
 | `rowKey` | `string \| (record) => Key` | 行唯一键，默认 `"key"` |
-| `pagination` | `PaginationConfig \| false` | 分页；`false` 关闭分页 |
+| `pagination` | `PaginationConfig \| false` | 分页；`false` 关闭分页；支持 `pagination.render(props)` 自定义分页 UI |
 | `rowSelection` | `RowSelection<T>` | 行多选/单选 |
 | `loading` | `boolean` | 加载中 |
 | `bordered` | `boolean` | 是否显示边框，默认 `true` |
@@ -130,9 +130,38 @@ const columns: CommonColumnType<Record>[] = [
 
 ---
 
+### 自定义分页
+
+`pagination` 为对象时可传 `render: (props: PaginationRenderProps) => ReactNode`。  
+`props` 含 `current`、`pageSize`、`total`、`totalPages`、`onChange(page, pageSize)`，由你完全自定义分页区域；传入后不再渲染默认分页栏。
+
+```tsx
+<CommonTable
+  pagination={{
+    current: 1,
+    pageSize: 10,
+    total: 100,
+    render: ({ current, pageSize, total, totalPages, onChange }) => (
+      <MyPagination
+        page={current}
+        pageSize={pageSize}
+        total={total}
+        totalPages={totalPages}
+        onPageChange={(p) => onChange(p, pageSize)}
+        onPageSizeChange={(s) => onChange(1, s)}
+      />
+    ),
+  }}
+  // ...
+/>
+```
+
+---
+
 ## 类型速查
 
-- **PaginationConfig**：`current`, `pageSize`, `total?`, `serverSide?`, `onChange?`
+- **PaginationConfig**：`current`, `pageSize`, `total?`, `serverSide?`, `onChange?`, `render?`（自定义分页）
+- **PaginationRenderProps**：`current`, `pageSize`, `total`, `totalPages`, `onChange(page, pageSize)`
 - **RowSelection**：`type?`, `selectedRowKeys?`, `preserveSelectedRowKeys?`, `fixed?`, `onChange?`
 - **TableLocale**：`emptyText?`, `loadingText?`
 - **FilterCondition**：`field`, `label`, `type`, `operator`, `value`
@@ -144,3 +173,10 @@ const columns: CommonColumnType<Record>[] = [
 ## 示例
 
 完整用法见项目内 `src/examples/TableDemo.tsx`：含列定义、固定列、筛选栏、列设置、分页及筛选条件与表格数据联动（取交集过滤）。
+
+---
+
+## 测试与边界情况
+
+- **测试清单与边界说明**：见 [TESTING.md](./TESTING.md)，含建议测试场景、已修复边界问题及已知限制。
+- **已处理边界**：分页当前页超出总页数时自动回到有效页；行 `rowKey` 缺失时用索引兜底避免重复 key。

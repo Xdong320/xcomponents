@@ -199,10 +199,14 @@ export function CommonTable<T extends Record<string, any> = any>({
 
   const [internalPagination, setInternalPagination] = useState({
     current:
-      paginationProp && paginationProp !== false ? paginationProp.current : 1,
+      paginationProp === false ? 1 : (paginationProp?.current ?? 1),
     pageSize:
-      paginationProp && paginationProp !== false ? paginationProp.pageSize : 10,
+      paginationProp === false ? 10 : (paginationProp?.pageSize ?? 10),
   });
+
+  const isPaginationControlled =
+    paginationProp !== false &&
+    typeof paginationProp?.onChange === "function";
 
   const paginationConfig: PaginationConfig | false =
     paginationProp === false
@@ -210,11 +214,15 @@ export function CommonTable<T extends Record<string, any> = any>({
       : {
           ...(paginationProp || {}),
           current:
-            paginationProp && "current" in paginationProp
+            isPaginationControlled &&
+            paginationProp &&
+            "current" in paginationProp
               ? paginationProp.current
               : internalPagination.current,
           pageSize:
-            paginationProp && "pageSize" in paginationProp
+            isPaginationControlled &&
+            paginationProp &&
+            "pageSize" in paginationProp
               ? paginationProp.pageSize
               : internalPagination.pageSize,
           total:
@@ -240,13 +248,9 @@ export function CommonTable<T extends Record<string, any> = any>({
 
   const isServerSide = paginationConfig && paginationConfig.serverSide;
   const currentPage =
-    paginationConfig && paginationConfig !== false
-      ? paginationConfig.current
-      : 1;
+    paginationConfig !== false ? paginationConfig.current : 1;
   const pageSize =
-    paginationConfig && paginationConfig !== false
-      ? paginationConfig.pageSize
-      : 10;
+    paginationConfig !== false ? paginationConfig.pageSize : 10;
 
   const filteredData = useMemo(() => {
     let result = dataSource;
@@ -290,11 +294,27 @@ export function CommonTable<T extends Record<string, any> = any>({
   }, [filteredData, sorter, visibleColumns, columns]);
 
   const total = sortedData.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const effectiveCurrentPage =
+    total === 0 ? 1 : Math.min(currentPage, totalPages);
   const displayData = useMemo(() => {
     if (isServerSide) return dataSource;
-    const start = (currentPage - 1) * pageSize;
+    const start = (effectiveCurrentPage - 1) * pageSize;
     return sortedData.slice(start, start + pageSize);
-  }, [isServerSide, dataSource, sortedData, currentPage, pageSize]);
+  }, [isServerSide, dataSource, sortedData, effectiveCurrentPage, pageSize]);
+
+  useEffect(() => {
+    if (isServerSide || total === 0) return;
+    if (
+      currentPage > totalPages &&
+      !isPaginationControlled
+    ) {
+      setInternalPagination((prev) => ({
+        ...prev,
+        current: totalPages,
+      }));
+    }
+  }, [total, totalPages, currentPage, isServerSide, isPaginationControlled]);
 
   const selectedRowKeys = useMemo(() => {
     if (rowSelectionProp?.selectedRowKeys != null)
@@ -331,10 +351,7 @@ export function CommonTable<T extends Record<string, any> = any>({
         total: isServerSide ? paginationConfig?.total : total,
       } as PaginationConfig;
       if (paginationProp === false || !paginationProp) return;
-      if (
-        !("current" in paginationProp) ||
-        paginationProp.current === undefined
-      ) {
+      if (!isPaginationControlled) {
         setInternalPagination({ current: page, pageSize: newPageSize });
       }
       paginationProp.onChange?.(page, newPageSize);
@@ -350,6 +367,7 @@ export function CommonTable<T extends Record<string, any> = any>({
     [
       paginationConfig,
       paginationProp,
+      isPaginationControlled,
       isServerSide,
       total,
       filters,
@@ -370,10 +388,7 @@ export function CommonTable<T extends Record<string, any> = any>({
         pageSize,
         total: isServerSide ? paginationConfig?.total : total,
       } as PaginationConfig;
-      if (
-        !("current" in (paginationConfig || {})) ||
-        paginationConfig?.current === undefined
-      ) {
+      if (!isPaginationControlled) {
         setInternalPagination((prev) => ({ ...prev, current: 1 }));
       }
       triggerOnChange(
@@ -387,6 +402,7 @@ export function CommonTable<T extends Record<string, any> = any>({
     },
     [
       filters,
+      isPaginationControlled,
       paginationConfig,
       pageSize,
       isServerSide,
@@ -406,7 +422,9 @@ export function CommonTable<T extends Record<string, any> = any>({
         pageSize,
         total: isServerSide ? paginationConfig?.total : total,
       } as PaginationConfig;
-      setInternalPagination((prev) => ({ ...prev, current: 1 }));
+      if (!isPaginationControlled) {
+        setInternalPagination((prev) => ({ ...prev, current: 1 }));
+      }
       triggerOnChange(
         newPagination,
         filters,
@@ -423,6 +441,7 @@ export function CommonTable<T extends Record<string, any> = any>({
       total,
       filters,
       displayData,
+      isPaginationControlled,
       triggerOnChange,
     ],
   );
@@ -850,10 +869,11 @@ export function CommonTable<T extends Record<string, any> = any>({
             ) : (
               displayData.map((record, index) => {
                 const key = getRowKey(record);
+                const rowKeySafe = key !== undefined && key !== null ? key : index;
                 const selected = selectedRowKeys.includes(key);
                 return (
                   <tr
-                    key={key.toString()}
+                    key={rowKeySafe.toString()}
                     className={`group cursor-pointer bg-figma-surface-alt ${selected ? "bg-figma-primary/5" : ""}`}
                   >
                     {rowSelectionProp && rowSelectionProp.type !== "radio" && (
@@ -988,60 +1008,96 @@ export function CommonTable<T extends Record<string, any> = any>({
         </table>
       </div>
 
-      {paginationConfig && paginationConfig !== false && (
-        <div className="flex items-center justify-between gap-2 rounded-figma-card border border-figma-border bg-figma-surface px-4 py-3 text-figma-paragraph text-figma-text-secondary shadow-figma-small">
-          <span>
-            共 {isServerSide ? (paginationConfig.total ?? 0) : total} 条
-          </span>
-          <div className="flex items-center gap-2">
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                handlePaginationChange(1, v);
-              }}
-              className="rounded-figma-btn border border-figma-border bg-figma-surface px-2.5 py-1.5 text-figma-paragraph text-figma-text-primary"
-            >
-              {[10, 20, 50, 100].map((n) => (
-                <option key={n} value={n}>
-                  {n} 条/页
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              disabled={currentPage <= 1}
-              onClick={() => handlePaginationChange(currentPage - 1, pageSize)}
-              className="rounded-figma-btn border border-figma-border px-2.5 py-1.5 text-figma-paragraph text-figma-text-secondary disabled:opacity-50 hover:bg-figma-surface-alt"
-            >
-              上一页
-            </button>
-            <span>
-              {currentPage} /{" "}
-              {Math.max(
-                1,
-                Math.ceil(
-                  (isServerSide ? (paginationConfig.total ?? 0) : total) /
-                    pageSize,
-                ),
-              )}
-            </span>
-            <button
-              type="button"
-              disabled={
-                currentPage >=
-                Math.ceil(
-                  (isServerSide ? (paginationConfig.total ?? 0) : total) /
-                    pageSize,
-                )
-              }
-              onClick={() => handlePaginationChange(currentPage + 1, pageSize)}
-              className="rounded-figma-btn border border-figma-border px-2.5 py-1.5 text-figma-paragraph text-figma-text-secondary disabled:opacity-50 hover:bg-figma-surface-alt"
-            >
-              下一页
-            </button>
-          </div>
-        </div>
+      {paginationConfig !== false && (
+        <>
+          {typeof paginationConfig.render === "function" ? (
+            paginationConfig.render({
+              current: isServerSide ? currentPage : effectiveCurrentPage,
+              pageSize,
+              total: isServerSide ? (paginationConfig.total ?? 0) : total,
+              totalPages: isServerSide
+                ? Math.max(
+                    1,
+                    Math.ceil(
+                      (paginationConfig.total ?? 0) / pageSize,
+                    ),
+                  )
+                : totalPages,
+              onChange: handlePaginationChange,
+            })
+          ) : (
+            <div className="flex items-center justify-between gap-2 rounded-figma-card border border-figma-border bg-figma-surface px-4 py-3 text-figma-paragraph text-figma-text-secondary shadow-figma-small">
+              <span>
+                共 {isServerSide ? (paginationConfig.total ?? 0) : total} 条
+              </span>
+              <div className="flex items-center gap-2">
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    handlePaginationChange(1, v);
+                  }}
+                  className="rounded-figma-btn border border-figma-border bg-figma-surface px-2.5 py-1.5 text-figma-paragraph text-figma-text-primary"
+                >
+                  {[10, 20, 50, 100].map((n) => (
+                    <option key={n} value={n}>
+                      {n} 条/页
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={
+                    (isServerSide ? currentPage : effectiveCurrentPage) <= 1
+                  }
+                  onClick={() =>
+                    handlePaginationChange(
+                      (isServerSide ? currentPage : effectiveCurrentPage) - 1,
+                      pageSize,
+                    )
+                  }
+                  className="rounded-figma-btn border border-figma-border px-2.5 py-1.5 text-figma-paragraph text-figma-text-secondary disabled:opacity-50 hover:bg-figma-surface-alt"
+                >
+                  上一页
+                </button>
+                <span>
+                  {isServerSide ? currentPage : effectiveCurrentPage} /{" "}
+                  {isServerSide
+                    ? Math.max(
+                        1,
+                        Math.ceil(
+                          (paginationConfig?.total ?? 0) / pageSize,
+                        ),
+                      )
+                    : totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={
+                    (isServerSide ? currentPage : effectiveCurrentPage) >=
+                    (isServerSide
+                      ? Math.max(
+                          1,
+                          Math.ceil(
+                            (paginationConfig?.total ?? 0) / pageSize,
+                          ),
+                        )
+                      : totalPages)
+                  }
+                  onClick={() =>
+                    handlePaginationChange(
+                      (isServerSide ? currentPage : effectiveCurrentPage) + 1,
+                      pageSize,
+                    )
+                  }
+                  className="rounded-figma-btn border border-figma-border px-2.5 py-1.5 text-figma-paragraph text-figma-text-secondary disabled:opacity-50 hover:bg-figma-surface-alt"
+                >
+                  下一页
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

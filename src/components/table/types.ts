@@ -51,12 +51,23 @@ export interface FilterBuilderProps {
   formatConditionLabel?: (condition: FilterCondition) => string;
 }
 
+/** 自定义分页渲染时传入的参数 */
+export interface PaginationRenderProps {
+  current: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  onChange: (page: number, pageSize: number) => void;
+}
+
 export interface PaginationConfig {
   current: number;
   pageSize: number;
   total?: number;
   serverSide?: boolean;
   onChange?: (page: number, pageSize: number) => void;
+  /** 传入时使用自定义分页 UI，不再渲染默认分页栏 */
+  render?: (props: PaginationRenderProps) => React.ReactNode;
 }
 
 export type SortOrder = 'ascend' | 'descend' | null;
