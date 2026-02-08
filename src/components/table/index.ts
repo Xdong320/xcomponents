@@ -1,6 +1,7 @@
 export { CommonTable } from './CommonTable';
 export { FilterBuilder } from './FilterBuilder';
 export { ColumnSettings } from './ColumnSettings';
+export { TablePagination } from './TablePagination';
 export type {
   CommonTableProps,
   CommonColumnType,
@@ -20,3 +21,4 @@ export type {
   ColumnSettingsProps,
   Key,
 } from './types';
+export type { TablePaginationProps } from './TablePagination';

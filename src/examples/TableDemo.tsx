@@ -331,7 +331,7 @@ export function TableDemo() {
             pageSize: 10,
             serverSide: false,
           }}
-          scroll={{ y: 400, x: 1200 }}
+          scroll={{ y: 500, x: 1200 }}
           rowSelection={{
             type: "checkbox",
             fixed: "left",

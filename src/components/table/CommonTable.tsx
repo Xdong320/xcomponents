@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { FilterBuilder } from "./FilterBuilder";
 import { ColumnSettings } from "./ColumnSettings";
+import { TablePagination } from "./TablePagination";
 import type {
   CommonColumnType,
   CommonTableProps,
@@ -198,15 +199,12 @@ export function CommonTable<T extends Record<string, any> = any>({
   const shadowRightCell = "-2px 0 4px -2px rgba(0,0,0,0.06)";
 
   const [internalPagination, setInternalPagination] = useState({
-    current:
-      paginationProp === false ? 1 : (paginationProp?.current ?? 1),
-    pageSize:
-      paginationProp === false ? 10 : (paginationProp?.pageSize ?? 10),
+    current: paginationProp === false ? 1 : (paginationProp?.current ?? 1),
+    pageSize: paginationProp === false ? 10 : (paginationProp?.pageSize ?? 10),
   });
 
   const isPaginationControlled =
-    paginationProp !== false &&
-    typeof paginationProp?.onChange === "function";
+    paginationProp !== false && typeof paginationProp?.onChange === "function";
 
   const paginationConfig: PaginationConfig | false =
     paginationProp === false
@@ -247,10 +245,8 @@ export function CommonTable<T extends Record<string, any> = any>({
   );
 
   const isServerSide = paginationConfig && paginationConfig.serverSide;
-  const currentPage =
-    paginationConfig !== false ? paginationConfig.current : 1;
-  const pageSize =
-    paginationConfig !== false ? paginationConfig.pageSize : 10;
+  const currentPage = paginationConfig !== false ? paginationConfig.current : 1;
+  const pageSize = paginationConfig !== false ? paginationConfig.pageSize : 10;
 
   const filteredData = useMemo(() => {
     let result = dataSource;
@@ -305,10 +301,7 @@ export function CommonTable<T extends Record<string, any> = any>({
 
   useEffect(() => {
     if (isServerSide || total === 0) return;
-    if (
-      currentPage > totalPages &&
-      !isPaginationControlled
-    ) {
+    if (currentPage > totalPages && !isPaginationControlled) {
       setInternalPagination((prev) => ({
         ...prev,
         current: totalPages,
@@ -530,8 +523,10 @@ export function CommonTable<T extends Record<string, any> = any>({
   const borderB = "border-b border-figma-border";
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-col ">
+      {filterBuilderProps && <FilterBuilder {...filterBuilderProps} />}
+      {/* 标题与列设置同一行：标题左对齐，搜索 + 列设置右对齐 */}
+      <div className="flex py-4 items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {title && (
             <h2 className="text-figma-label-md text-figma-text-secondary">
@@ -552,45 +547,39 @@ export function CommonTable<T extends Record<string, any> = any>({
               🔍
             </span>
           </div>
-        </div>
-      </div>
-
-      {filterBuilderProps && <FilterBuilder {...filterBuilderProps} />}
-
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex-1" />
-        {columnSettingsProps && (
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setColumnSettingsOpen((v) => !v)}
-              className="flex items-center gap-1 rounded-figma-btn border border-figma-border bg-figma-surface px-2.5 py-2 text-figma-label-sm text-figma-text-secondary hover:bg-figma-surface-alt"
-            >
-              <span>列设置</span>
-            </button>
-            {columnSettingsOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  aria-hidden
-                  onClick={() => setColumnSettingsOpen(false)}
-                />
-                <div className="absolute right-0 top-full z-20 mt-1">
-                  <ColumnSettings
-                    allColumns={columnSettingsProps.allColumns ?? columns}
-                    visibleKeys={
-                      columnSettingsProps.visibleKeys ?? allColumnKeys
-                    }
-                    onChange={(keys) => {
-                      columnSettingsProps.onChange?.(keys);
-                      setColumnSettingsOpen(false);
-                    }}
+          {columnSettingsProps && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setColumnSettingsOpen((v) => !v)}
+                className="flex items-center gap-1 rounded-figma-btn border border-figma-border bg-figma-surface px-2.5 py-2 text-figma-label-sm text-figma-text-secondary hover:bg-figma-surface-alt"
+              >
+                <span>列设置</span>
+              </button>
+              {columnSettingsOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    aria-hidden
+                    onClick={() => setColumnSettingsOpen(false)}
                   />
-                </div>
-              </>
-            )}
-          </div>
-        )}
+                  <div className="absolute right-0 top-full z-20 mt-1">
+                    <ColumnSettings
+                      allColumns={columnSettingsProps.allColumns ?? columns}
+                      visibleKeys={
+                        columnSettingsProps.visibleKeys ?? allColumnKeys
+                      }
+                      onChange={(keys) => {
+                        columnSettingsProps.onChange?.(keys);
+                        setColumnSettingsOpen(false);
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div
@@ -869,7 +858,8 @@ export function CommonTable<T extends Record<string, any> = any>({
             ) : (
               displayData.map((record, index) => {
                 const key = getRowKey(record);
-                const rowKeySafe = key !== undefined && key !== null ? key : index;
+                const rowKeySafe =
+                  key !== undefined && key !== null ? key : index;
                 const selected = selectedRowKeys.includes(key);
                 return (
                   <tr
@@ -1009,95 +999,18 @@ export function CommonTable<T extends Record<string, any> = any>({
       </div>
 
       {paginationConfig !== false && (
-        <>
-          {typeof paginationConfig.render === "function" ? (
-            paginationConfig.render({
-              current: isServerSide ? currentPage : effectiveCurrentPage,
-              pageSize,
-              total: isServerSide ? (paginationConfig.total ?? 0) : total,
-              totalPages: isServerSide
-                ? Math.max(
-                    1,
-                    Math.ceil(
-                      (paginationConfig.total ?? 0) / pageSize,
-                    ),
-                  )
-                : totalPages,
-              onChange: handlePaginationChange,
-            })
-          ) : (
-            <div className="flex items-center justify-between gap-2 rounded-figma-card border border-figma-border bg-figma-surface px-4 py-3 text-figma-paragraph text-figma-text-secondary shadow-figma-small">
-              <span>
-                共 {isServerSide ? (paginationConfig.total ?? 0) : total} 条
-              </span>
-              <div className="flex items-center gap-2">
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    const v = Number(e.target.value);
-                    handlePaginationChange(1, v);
-                  }}
-                  className="rounded-figma-btn border border-figma-border bg-figma-surface px-2.5 py-1.5 text-figma-paragraph text-figma-text-primary"
-                >
-                  {[10, 20, 50, 100].map((n) => (
-                    <option key={n} value={n}>
-                      {n} 条/页
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  disabled={
-                    (isServerSide ? currentPage : effectiveCurrentPage) <= 1
-                  }
-                  onClick={() =>
-                    handlePaginationChange(
-                      (isServerSide ? currentPage : effectiveCurrentPage) - 1,
-                      pageSize,
-                    )
-                  }
-                  className="rounded-figma-btn border border-figma-border px-2.5 py-1.5 text-figma-paragraph text-figma-text-secondary disabled:opacity-50 hover:bg-figma-surface-alt"
-                >
-                  上一页
-                </button>
-                <span>
-                  {isServerSide ? currentPage : effectiveCurrentPage} /{" "}
-                  {isServerSide
-                    ? Math.max(
-                        1,
-                        Math.ceil(
-                          (paginationConfig?.total ?? 0) / pageSize,
-                        ),
-                      )
-                    : totalPages}
-                </span>
-                <button
-                  type="button"
-                  disabled={
-                    (isServerSide ? currentPage : effectiveCurrentPage) >=
-                    (isServerSide
-                      ? Math.max(
-                          1,
-                          Math.ceil(
-                            (paginationConfig?.total ?? 0) / pageSize,
-                          ),
-                        )
-                      : totalPages)
-                  }
-                  onClick={() =>
-                    handlePaginationChange(
-                      (isServerSide ? currentPage : effectiveCurrentPage) + 1,
-                      pageSize,
-                    )
-                  }
-                  className="rounded-figma-btn border border-figma-border px-2.5 py-1.5 text-figma-paragraph text-figma-text-secondary disabled:opacity-50 hover:bg-figma-surface-alt"
-                >
-                  下一页
-                </button>
-              </div>
-            </div>
-          )}
-        </>
+        <TablePagination
+          current={isServerSide ? currentPage : effectiveCurrentPage}
+          pageSize={pageSize}
+          total={isServerSide ? (paginationConfig.total ?? 0) : total}
+          totalPages={
+            isServerSide
+              ? Math.max(1, Math.ceil((paginationConfig.total ?? 0) / pageSize))
+              : totalPages
+          }
+          onChange={handlePaginationChange}
+          customRender={paginationConfig.render}
+        />
       )}
     </div>
   );
