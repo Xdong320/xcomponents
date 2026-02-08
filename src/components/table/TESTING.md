@@ -1,5 +1,13 @@
 # 表格组件测试与边界情况说明
 
+## 组件关系说明
+
+- **CommonTable**：主表格，不含 FilterBuilder；需要筛选时在页面中单独引用 FilterBuilder，通常放在表格上方，将 `value` / `onChange` 与表格数据或接口联动。
+- **TablePagination**：分页组件，CommonTable 在开启分页且未传 `pagination.render` 时内部使用；也可单独引用。
+- **FilterBuilder**：筛选条件组件，不集成在 CommonTable 内，需用时单独引用并自行布局（如放在表格上方）。
+
+---
+
 ## 已修复的边界问题
 
 1. **分页当前页超出范围**  
@@ -22,13 +30,14 @@
 | 无列设置 | 不传 `columnSettingsProps` | 显示全部列 |
 | 列设置清空 | 列设置里点「清空」 | 仅剩选择列（若有），空数据/加载行 colSpan 正确 |
 
-### 分页
+### 分页（TablePagination / CommonTable 内置）
 
 | 场景 | 操作 | 预期 |
 |------|------|------|
 | 第 5 页后筛选到 10 条 | 筛选使数据变少 | 自动回到有效页（如 1/1），不空白 |
 | 切换每页条数 | 选 20 条/页 | 当前页在有效范围内，列表与页码一致 |
 | 关闭分页 | `pagination={false}` | 不显示分页栏，展示全部数据 |
+| 自定义分页 | `pagination.render(props)` | 仅渲染自定义分页 UI，不渲染默认分页栏 |
 
 ### 排序与列筛选
 
@@ -55,7 +64,7 @@
 | 纵向滚动 | `scroll.y` | 表头固定，与表体同步滚动 |
 | 先纵滚再横滚 | 先上下滑再左右滑 | 固定列阴影随横向滚动出现/消失 |
 
-### FilterBuilder
+### FilterBuilder（单独引用，不集成在 CommonTable 内）
 
 | 场景 | 操作 | 预期 |
 |------|------|------|
@@ -65,6 +74,7 @@
 | 保存组合 | 输入名称保存 | localStorage 有记录，加号列表中出现 |
 | 选已保存 | 点已保存项 | 条件回显到筛选栏，`onChange` 触发 |
 | 删除已保存 | 点某条删除 | 从列表和 localStorage 移除 |
+| 与表格联动 | 页面中 FilterBuilder 在上、CommonTable 在下 | 用 FilterBuilder 的 value/onChange 驱动过滤，将过滤后数据传给 CommonTable 的 dataSource |
 
 ### 样式与交互
 
@@ -95,4 +105,8 @@
 npm run dev
 ```
 
-打开示例页，按上表逐项操作（空数据、筛选到少量数据翻页、固定列横向滚动、筛选栏保存/回显等）做一次回归即可。
+打开示例页（FilterBuilder 在表格上方单独引用），按上表逐项操作（空数据、筛选到少量数据翻页、固定列横向滚动、筛选栏保存/回显等）做一次回归即可。
+
+---
+
+**维护**：组件有变动时请同步更新本 TESTING.md 与 [README.md](./README.md) 中的测试场景与说明。

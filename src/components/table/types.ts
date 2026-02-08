@@ -147,7 +147,6 @@ export interface CommonTableProps<T = any> {
   searchValue?: string;
   /** 搜索变更回调 */
   onSearchChange?: (value: string) => void;
-  filterBuilderProps?: FilterBuilderProps;
   columnSettingsProps?: Partial<ColumnSettingsProps<T>>;
   /** 表头/列固定：y 为表头固定高度，x 为横向滚动宽度（列固定需配合使用） */
   scroll?: { x?: number | string; y?: number | string };

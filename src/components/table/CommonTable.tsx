@@ -5,7 +5,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { FilterBuilder } from "./FilterBuilder";
 import { ColumnSettings } from "./ColumnSettings";
 import { TablePagination } from "./TablePagination";
 import type {
@@ -60,7 +59,6 @@ export function CommonTable<T extends Record<string, any> = any>({
   searchPlaceholder = "搜索",
   searchValue,
   onSearchChange,
-  filterBuilderProps,
   columnSettingsProps,
   scroll: scrollProp,
   locale: localeProp,
@@ -524,7 +522,6 @@ export function CommonTable<T extends Record<string, any> = any>({
 
   return (
     <div className="flex flex-col ">
-      {filterBuilderProps && <FilterBuilder {...filterBuilderProps} />}
       {/* 标题与列设置同一行：标题左对齐，搜索 + 列设置右对齐 */}
       <div className="flex py-4 items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -535,7 +532,7 @@ export function CommonTable<T extends Record<string, any> = any>({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
+          {/* <div className="relative">
             <input
               type="text"
               placeholder={searchPlaceholder}
@@ -546,7 +543,7 @@ export function CommonTable<T extends Record<string, any> = any>({
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-figma-text-secondary">
               🔍
             </span>
-          </div>
+          </div> */}
           {columnSettingsProps && (
             <div className="relative">
               <button

@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import {
   CommonTable,
+  FilterBuilder,
   type CommonColumnType,
   type FilterCondition,
   type FilterConditionDateValue,
@@ -320,43 +321,45 @@ export function TableDemo() {
         <h1 className="mb-4 text-figma-label-md tracking-figma-md text-figma-text-primary">
           会话洞察 · 会话列表
         </h1>
-        <CommonTable<SessionRecord>
-          title="会话列表"
-          columns={columns}
-          dataSource={filteredData}
-          rowKey="key"
-          searchPlaceholder="搜索"
-          pagination={{
-            current: 1,
-            pageSize: 10,
-            serverSide: false,
-          }}
-          scroll={{ y: 500, x: 1200 }}
-          rowSelection={{
-            type: "checkbox",
-            fixed: "left",
-            preserveSelectedRowKeys: true,
-            onChange: (selectedRowKeys, selectedRows) => {
-              console.log("选中行", selectedRowKeys, selectedRows);
-            },
-          }}
-          filterBuilderProps={{
-            id: "session-list-filter",
-            fields: filterFields,
-            value: filterConditions,
-            onChange: handleFilterChange,
-            variant: "bar",
-            formatConditionLabel: formatFilterLabel,
-          }}
-          columnSettingsProps={{
-            allColumns: columns,
-            visibleKeys,
-            onChange: setVisibleKeys,
-          }}
+        <div className="flex flex-col gap-4">
+          <FilterBuilder
+            id="session-list-filter"
+            fields={filterFields}
+            value={filterConditions}
+            onChange={handleFilterChange}
+            variant="bar"
+            formatConditionLabel={formatFilterLabel}
+          />
+          <CommonTable<SessionRecord>
+            title="会话列表"
+            columns={columns}
+            dataSource={filteredData}
+            rowKey="key"
+            searchPlaceholder="搜索"
+            pagination={{
+              current: 1,
+              pageSize: 10,
+              serverSide: false,
+            }}
+            scroll={{ y: 500, x: 1200 }}
+            rowSelection={{
+              type: "checkbox",
+              fixed: "left",
+              preserveSelectedRowKeys: true,
+              onChange: (selectedRowKeys, selectedRows) => {
+                console.log("选中行", selectedRowKeys, selectedRows);
+              },
+            }}
+            columnSettingsProps={{
+              allColumns: columns,
+              visibleKeys,
+              onChange: setVisibleKeys,
+            }}
           onChange={handleTableChange}
           bordered={false}
           size="middle"
-        />
+          />
+        </div>
       </div>
     </div>
   );
