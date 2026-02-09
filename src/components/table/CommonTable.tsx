@@ -536,7 +536,7 @@ export function CommonTable<T extends Record<string, any> = any>({
       <div className="flex py-4 items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {title && (
-            <div className="text-sm font-normal text-gray-600">{title}</div>
+            <div className="text-base font-medium text-600">{title}</div>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -545,7 +545,7 @@ export function CommonTable<T extends Record<string, any> = any>({
               <button
                 type="button"
                 onClick={() => setColumnSettingsOpen((v) => !v)}
-                className="flex items-center gap-1 rounded-zxl border border-200 bg-0 px-2.5 py-2 text-sm font-medium text-600 hover:bg-100"
+                className="flex items-center gap-1 rounded-xl border border-200 bg-0 px-2.5 py-2 text-sm font-medium text-600 hover:bg-100"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -711,7 +711,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                 return (
                   <th
                     key={key.toString()}
-                    className={`${borderR} ${borderB} ${rowSizeClass} text-left text-sm text-600 ${bordered ? "last:border-r-0" : ""} ${isFixedLeft || isFixedRight ? "sticky z-[2] bg-100" : ""}`}
+                    className={`${borderR} ${borderB} ${rowSizeClass} text-left text-sm font-normal text-600 ${bordered ? "last:border-r-0" : ""} ${isFixedLeft || isFixedRight ? "sticky z-[2] bg-100" : ""}`}
                     style={{
                       ...(col.width
                         ? { width: col.width, minWidth: col.width }

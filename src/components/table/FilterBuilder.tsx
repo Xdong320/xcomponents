@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type {
   FilterBuilderProps,
   FilterCondition,
@@ -241,7 +247,10 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
           {conditions.length === 0 && (
             <span className="text-sm text-gray-400">添加筛选条件</span>
           )}
-          <div ref={addAlignRef} className="relative flex shrink-0 items-center">
+          <div
+            ref={addAlignRef}
+            className="relative flex shrink-0 items-center"
+          >
             <button
               type="button"
               onClick={() => {
@@ -293,13 +302,13 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                     addAlign === "left" ? "left-0" : "right-0"
                   }`}
                 >
-                  <div className="mb-1 px-3 py-1 text-sm font-medium text-600">
-                    已保存的筛选
-                  </div>
-                  {presets.length === 0 && (
-                    <div className="px-3 py-1.5 text-sm text-600">
-                      暂无已保存
-                    </div>
+                  {presets.length > 0 && (
+                    <>
+                      <div className="mb-1 px-3 py-1 text-sm font-medium text-600">
+                        已保存的筛选
+                      </div>
+                      <div className="my-1 border-t border-200" />
+                    </>
                   )}
                   {presets.map((p) => (
                     <div
@@ -334,7 +343,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                       </button>
                     </div>
                   ))}
-                  <div className="my-1 border-t border-200" />
+
                   <div className="mb-1 px-3 py-1 text-sm font-medium text-600">
                     表格字段
                   </div>

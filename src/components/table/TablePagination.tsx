@@ -129,7 +129,7 @@ export function TablePagination({
             item === "ellipsis" ? (
               <span
                 key={`e-${i}`}
-                className="flex h-8 w-8 items-center justify-center text-xs font-medium text-600"
+                className="flex h-8 w-8 items-center justify-center text-sm font-medium text-600"
               >
                 …
               </span>
@@ -138,7 +138,7 @@ export function TablePagination({
                 key={item}
                 type="button"
                 onClick={() => onChange(item, pageSize)}
-                className={`flex h-8 min-w-[32px] items-center justify-center rounded-full px-2 text-xs font-medium text-600 transition-colors hover:bg-100 ${item === current ? "bg-100" : ""}`}
+                className={`flex h-8 min-w-[32px] items-center justify-center rounded-full px-2 text-sm font-medium text-600 transition-colors hover:bg-100 ${item === current ? "bg-100" : ""}`}
               >
                 {item}
               </button>
@@ -161,7 +161,7 @@ export function TablePagination({
           onChange={(e) => {
             onChange(1, Number(e.target.value));
           }}
-          className="cursor-pointer appearance-auto rounded-lg border border-200 bg-0 py-1.5 pl-2.5 pr-1.5 text-xs text-sub-600 shadow-small outline-none"
+          className="cursor-pointer appearance-auto rounded-lg border border-200 bg-0 py-1.5 pl-2.5 pr-1.5 text-sm text-sub-600 shadow-small outline-none"
         >
           {pageSizeOptions.map((n) => (
             <option key={n} value={n}>
