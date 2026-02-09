@@ -535,7 +535,7 @@ export function CommonTable<T extends Record<string, any> = any>({
               placeholder={searchPlaceholder}
               value={searchValue ?? ""}
               onChange={(e) => onSearchChange?.(e.target.value)}
-              className="h-9 w-60 rounded-btn border border-200 bg-0 pl-9 pr-3 text-sm text-950 outline-none placeholder:text-600 focus:border-primary"
+              className="h-9 w-60 rounded-zxl border border-200 bg-0 pl-9 pr-3 text-sm text-950 outline-none placeholder:text-600 focus:border-primary"
             />
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-600">
               🔍
@@ -546,8 +546,11 @@ export function CommonTable<T extends Record<string, any> = any>({
               <button
                 type="button"
                 onClick={() => setColumnSettingsOpen((v) => !v)}
-                className="flex items-center gap-1 rounded-btn border border-200 bg-0 px-2.5 py-2 text-sm font-medium text-600 hover:bg-100"
+                className="flex items-center gap-1 rounded-zxl border border-200 bg-0 px-2.5 py-2 text-sm font-medium text-600 hover:bg-100"
               >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
+                  <path d="M8.5 14.5H11.5V13H8.5V14.5ZM3.25 5.5V7H16.75V5.5H3.25ZM5.5 10.75H14.5V9.25H5.5V10.75Z" fill="currentColor" />
+                </svg>
                 <span>列设置</span>
               </button>
               {columnSettingsOpen && (
@@ -579,7 +582,7 @@ export function CommonTable<T extends Record<string, any> = any>({
       <div
         ref={scrollContainerRef}
         onScroll={hasScroll ? handleScroll : undefined}
-        className={`table-scroll-area min-w-0 w-full bg-0 shadow-small ${bordered ? "border border-200" : ""} ${scrollY != null ? "overflow-y-auto overflow-x-auto min-h-0" : "overflow-x-auto"}`}
+        className={`table-scroll-area min-w-0 w-full bg-0 ${bordered ? "border border-200" : ""} ${scrollY != null ? "overflow-y-auto overflow-x-auto min-h-0" : "overflow-x-auto"}`}
         style={
           scrollY != null
             ? {
@@ -603,7 +606,7 @@ export function CommonTable<T extends Record<string, any> = any>({
         >
           <thead>
             <tr
-              className={`rounded-t-table bg-100 transition-shadow duration-200 ease-out ${scrollY != null ? "sticky top-0 z-[2]" : ""}`}
+              className={`rounded-t-xl bg-100 transition-shadow duration-200 ease-out ${scrollY != null ? "sticky top-0 z-[2]" : ""}`}
               style={
                 showHeaderShadow
                   ? { boxShadow: "0 2px 8px -2px rgba(0,0,0,0.08)" }
@@ -781,7 +784,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                                 aria-hidden
                                 onClick={() => setFilterDropdownOpen(null)}
                               />
-                              <div className="absolute left-0 top-full z-20 mt-1 w-40 rounded-table border border-200 bg-0 p-2 shadow-small transition-opacity duration-150">
+                              <div className="absolute left-0 top-full z-20 mt-1 w-40 rounded-xl border border-200 bg-0 p-2 shadow-small transition-opacity duration-150">
                                 {(col.filters || []).map((f) => {
                                   const selected = (
                                     filters[key] ?? []
@@ -815,7 +818,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                                 <button
                                   type="button"
                                   onClick={() => handleFilterChange(key, null)}
-                                  className="mt-1 w-full rounded-tag border border-200 px-2 py-1 text-sm text-600 hover:bg-100"
+                                  className="mt-1 w-full rounded-lg border border-200 px-2 py-1 text-sm text-600 hover:bg-100"
                                 >
                                   重置
                                 </button>

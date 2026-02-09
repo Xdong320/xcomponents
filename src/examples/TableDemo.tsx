@@ -113,7 +113,7 @@ const columns: CommonColumnType<SessionRecord>[] = [
         </span>
         <button
           type="button"
-          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-tag border border-200 bg-100 text-600 hover:bg-0 hover:text-950"
+          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-200 bg-100 text-600 hover:bg-0 hover:text-950"
           title="复制"
           aria-label="复制"
         >
@@ -330,7 +330,7 @@ export function TableDemo() {
   }, []);
 
   return (
-    <div className="min-h-screen min-w-0 overflow-x-hidden bg-50 p-6 font-sans">
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-white p-6 font-sans">
       <div className="mx-auto min-w-0 max-w-[1320px]">
         <h1 className="mb-4 text-base font-medium tracking-normal text-950">
           会话洞察 · 会话列表

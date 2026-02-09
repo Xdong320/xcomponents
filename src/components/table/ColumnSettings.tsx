@@ -36,7 +36,7 @@ export function ColumnSettings<T = any>({
 
   return (
     <div
-      className={`w-56 rounded-table border border-200 bg-0 p-2 text-sm shadow-small transition-opacity duration-200 ${className ?? ''}`}
+      className={`w-56 rounded-xl border border-200 bg-0 p-2 text-sm shadow-small transition-opacity duration-200 ${className ?? ''}`}
     >
       <div className="mb-2 flex items-center justify-between text-sm font-medium text-600">
         <span className="font-medium text-950">列设置</span>
@@ -44,14 +44,14 @@ export function ColumnSettings<T = any>({
           <button
             type="button"
             onClick={handleSelectAll}
-            className="rounded-tag px-2 py-0.5 text-sm text-600 hover:bg-100"
+            className="rounded-lg px-2 py-0.5 text-sm text-600 hover:bg-100"
           >
             全选
           </button>
           <button
             type="button"
             onClick={handleClear}
-            className="rounded-tag px-2 py-0.5 text-sm text-600 hover:bg-100"
+            className="rounded-lg px-2 py-0.5 text-sm text-600 hover:bg-100"
           >
             清空
           </button>
@@ -65,7 +65,7 @@ export function ColumnSettings<T = any>({
           return (
             <label
               key={key.toString()}
-              className="flex cursor-pointer items-center gap-2 rounded-tag px-2 py-1.5 text-sm text-950 hover:bg-100"
+              className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-950 hover:bg-100"
             >
               <input
                 type="checkbox"

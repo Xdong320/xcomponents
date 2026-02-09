@@ -191,7 +191,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
   if (variant !== "bar") {
     return (
       <div
-        className={`flex flex-col gap-2 rounded-table border border-200 bg-0 p-3 shadow-small ${className ?? ""}`}
+        className={`flex flex-col gap-2 rounded-xl border border-200 bg-0 p-3 shadow-small ${className ?? ""}`}
       >
         <div className="text-sm text-600">筛选条件（请使用 variant="bar"）</div>
       </div>
@@ -201,20 +201,28 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
   return (
     <>
       <div
-        className={`flex flex-wrap items-center gap-2 rounded-card border-b border-200 bg-0 px-2.5 py-2 text-sm text-950 ${className ?? ""}`}
+        className={`flex flex-wrap items-center gap-2 rounded-0 border-b border-200 bg-0 py-2 text-sm text-950 ${className ?? ""}`}
       >
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-100 text-600">
-          <span className="flex flex-col gap-0.5">
-            <span className="block h-0.5 w-3 rounded bg-current" />
-            <span className="block h-0.5 w-2 rounded bg-current opacity-80" />
-            <span className="block h-0.5 w-1.5 rounded bg-current opacity-60" />
-          </span>
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center text-600">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            className="shrink-0"
+          >
+            <path
+              d="M8.5 14.5H11.5V13H8.5V14.5ZM3.25 5.5V7H16.75V5.5H3.25ZM5.5 10.75H14.5V9.25H5.5V10.75Z"
+              fill="currentColor"
+            />
+          </svg>
         </span>
         <div className={tagsWrapClass}>
           {conditions.map((c, index) => (
             <span
               key={`${c.field}-${index}`}
-              className="inline-flex items-center gap-1 rounded-tag border border-200 bg-100 px-2.5 py-1 text-sm text-950 shadow-small"
+              className="inline-flex items-center gap-1 rounded-lg border border-200 bg-100 px-2.5 py-1 text-sm text-950 shadow-small"
             >
               {formatConditionLabel(c)}
               <button
@@ -234,10 +242,22 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
             <button
               type="button"
               onClick={() => setAddOpen((v) => !v)}
-              className="flex h-6 w-6 items-center justify-center rounded-full border border-200 bg-0 text-600 shadow-small hover:bg-100 hover:text-950"
+              className="flex h-5 w-5 items-center justify-center rounded-full border border-200 bg-0 text-600 shadow-sm hover:bg-100 hover:text-950"
               aria-label="添加筛选"
             >
-              ＋
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                className="shrink-0"
+              >
+                <path
+                  d="M9.25 9.25V4.75H10.75V9.25H15.25V10.75H10.75V15.25H9.25V10.75H4.75V9.25H9.25Z"
+                  fill="currentColor"
+                />
+              </svg>
             </button>
             {addOpen && (
               <>
@@ -246,7 +266,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                   aria-hidden
                   onClick={() => setAddOpen(false)}
                 />
-                <div className="absolute right-0 top-full z-30 mt-1 max-h-72 w-56 overflow-auto rounded-table border border-200 bg-0 py-2 text-sm shadow-small">
+                <div className="absolute right-0 top-full z-30 mt-1 max-h-72 w-56 overflow-auto rounded-xl border border-200 bg-0 py-2 text-sm shadow-small">
                   <div className="mb-1 px-3 py-1 text-sm font-medium text-600">
                     已保存的筛选
                   </div>
@@ -311,7 +331,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
           <button
             type="button"
             onClick={() => setSaveModalOpen(true)}
-            className="flex h-6 w-6 items-center justify-center rounded-tag border border-200 bg-0 text-600 shadow-small hover:bg-100 hover:text-950"
+            className="flex h-6 w-6 items-center justify-center rounded-lg border border-200 bg-0 text-600 shadow-sm hover:bg-100 hover:text-950"
             aria-label="保存筛选"
             title="保存当前筛选条件"
           >
@@ -335,7 +355,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
       {saveModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div
-            className="w-96 rounded-table border border-200 bg-0 p-4 shadow-small"
+            className="w-96 rounded-xl border border-200 bg-0 p-4 shadow-small"
             role="dialog"
             aria-labelledby="save-filter-title"
           >
@@ -353,7 +373,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
               value={saveName}
               onChange={(e) => setSaveName(e.target.value)}
               placeholder="例：会话时长80-120s"
-              className="mb-4 w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none placeholder:text-600 focus:border-primary"
+              className="mb-4 w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none placeholder:text-600 focus:border-primary"
             />
             <div className="flex justify-end gap-2">
               <button
@@ -362,7 +382,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                   setSaveModalOpen(false);
                   setSaveName("");
                 }}
-                className="rounded-btn border border-200 px-3 py-1.5 text-sm text-600 hover:bg-100"
+                className="rounded-zxl border border-200 px-3 py-1.5 text-sm text-600 hover:bg-100"
               >
                 取消
               </button>
@@ -370,7 +390,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                 type="button"
                 onClick={handleSavePreset}
                 disabled={!saveName.trim()}
-                className="rounded-btn bg-primary px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+                className="rounded-zxl bg-primary px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
               >
                 保存
               </button>
@@ -429,7 +449,7 @@ function ConditionDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <div
-        className="w-[320px] rounded-table border border-200 bg-0 p-4 shadow-small"
+        className="w-[320px] rounded-xl border border-200 bg-0 p-4 shadow-small"
         role="dialog"
         aria-labelledby="condition-dialog-title"
       >
@@ -466,7 +486,7 @@ function ConditionDialog({
                     },
                   })
                 }
-                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 <option value="before">before</option>
                 <option value="after">after</option>
@@ -484,7 +504,7 @@ function ConditionDialog({
                     value: { ...dateValue, date: e.target.value },
                   })
                 }
-                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               />
             </div>
             <div className="mb-3">
@@ -497,7 +517,7 @@ function ConditionDialog({
                     value: { ...dateValue, time: e.target.value },
                   })
                 }
-                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               />
             </div>
           </>
@@ -510,7 +530,7 @@ function ConditionDialog({
               <select
                 value={condition.operator}
                 onChange={(e) => onUpdate({ operator: e.target.value })}
-                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 {getOperatorsForType("number").map((op) => (
                   <option key={op} value={op}>
@@ -532,7 +552,7 @@ function ConditionDialog({
                         : Number(e.target.value),
                   })
                 }
-                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               />
             </div>
           </>
@@ -545,7 +565,7 @@ function ConditionDialog({
               <select
                 value={condition.operator}
                 onChange={(e) => onUpdate({ operator: e.target.value })}
-                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 {(fieldMeta.operators ?? getOperatorsForType("text")).map(
                   (op) => (
@@ -564,7 +584,7 @@ function ConditionDialog({
                 onChange={(e) =>
                   onUpdate({ value: e.target.value || undefined })
                 }
-                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               />
             </div>
           </>
@@ -577,7 +597,7 @@ function ConditionDialog({
               <select
                 value={condition.operator}
                 onChange={(e) => onUpdate({ operator: e.target.value })}
-                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 {(fieldMeta.operators ?? ["="]).map((op) => (
                   <option key={op} value={op}>
@@ -595,7 +615,7 @@ function ConditionDialog({
                     value: e.target.value === "" ? undefined : e.target.value,
                   })
                 }
-                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 <option value="">请选择</option>
                 {fieldMeta.options?.map((opt) => (
@@ -623,7 +643,7 @@ function ConditionDialog({
                       : e.target.value === "true",
                 })
               }
-              className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+              className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
             >
               <option value="">全部</option>
               <option value="true">是</option>
@@ -636,7 +656,7 @@ function ConditionDialog({
           <button
             type="button"
             onClick={onApply}
-            className="rounded-btn bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+            className="rounded-zxl bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             应用
           </button>

@@ -31,10 +31,7 @@ export default {
         'icon-300': '#d3dbe6',
       },
       borderRadius: {
-        'card': '16px',
-        'table': '8px',
-        'btn': '12px',
-        'tag': '6px',
+        zxl: '12px',
       },
       boxShadow: {
         'small': '0px 2px 4px 0px rgba(0, 0, 0, 0.08)',
