@@ -1,6 +1,6 @@
 # 表格组件 (Table Components)
 
-基于 React + TypeScript + Tailwind 的公共表格能力，API 对齐 antd Table 常用字段，支持基础渲染、分页、排序、列筛选、行选择、固定列。筛选条件需单独使用 `FilterBuilder` 与表格组合。
+基于 React + TypeScript + Tailwind 的公共表格能力，API 对齐 antd Table 常用字段，支持基础渲染、排序、列筛选、行选择、固定列。**分页**与**筛选条件**不集成在 CommonTable 内，需用时分别单独引用 `TablePagination`、`FilterBuilder` 与表格组合。
 
 ---
 
@@ -9,7 +9,7 @@
 | 组件 / 类型 | 说明 |
 |-------------|------|
 | `CommonTable` | 主表格组件 |
-| `TablePagination` | 分页组件（CommonTable 默认分页栏使用；也可单独引用） |
+| `TablePagination` | 分页组件，**不集成在 CommonTable 内，需用时单独引用**（通常放在表格下方） |
 | `FilterBuilder` | 筛选条件组件（标签条 + 弹窗），**不集成在 CommonTable 内，需用时单独引用** |
 | `ColumnSettings` | 列显示/隐藏设置 |
 | `CommonTableProps`, `CommonColumnType`, `PaginationConfig`, `PaginationRenderProps`, `RowSelection`, `SorterResult`, `SortOrder`, `TableFilters`, `TableLocale` | 表格相关类型 |
@@ -21,7 +21,7 @@
 
 ## CommonTable
 
-主表格，支持分页、排序、列筛选、行选择、列设置、表头/列固定。默认分页栏使用内置的 `TablePagination` 样式；筛选条件需在页面中单独使用 `FilterBuilder` 与表格组合。标题与「列设置」按钮同一行（左标题、右搜索+列设置）。
+主表格，支持排序、列筛选、行选择、列设置、表头/列固定。**分页**仅通过 `pagination` 控制当前页/每页条数等数据行为（切片或服务端），不渲染分页栏；需分页 UI 时在页面中单独引用 `TablePagination` 并与之联动。筛选条件需单独使用 `FilterBuilder`。标题与「列设置」按钮同一行（左标题、右搜索+列设置）。
 
 ### 基础用法
 
@@ -48,7 +48,7 @@ const columns: CommonColumnType<Record>[] = [
 | `columns` | `CommonColumnType<T>[]` | 列配置 |
 | `dataSource` | `T[]` | 数据源 |
 | `rowKey` | `string \| (record) => Key` | 行唯一键，默认 `"key"` |
-| `pagination` | `PaginationConfig \| false` | 分页；`false` 关闭分页；支持 `pagination.render(props)` 自定义分页 UI |
+| `pagination` | `PaginationConfig \| false` | 分页**数据**配置：`current`/`pageSize`/`total?`/`serverSide?`/`onChange`，控制表格展示哪一页；`false` 表示不切片、展示全部数据。分页 **UI** 需在页面中单独使用 `TablePagination` |
 | `rowSelection` | `RowSelection<T>` | 行多选/单选 |
 | `loading` | `boolean` | 加载中 |
 | `bordered` | `boolean` | 是否显示边框，默认 `true` |
@@ -89,7 +89,7 @@ const columns: CommonColumnType<Record>[] = [
 
 ## TablePagination
 
-分页组件：上一页/下一页箭头、页码（含省略号）、每页条数下拉。CommonTable 在开启分页且未传 `pagination.render` 时内部使用该组件。也可单独引用做自定义布局。
+分页组件：上一页/下一页箭头、页码（含省略号）、每页条数下拉。**不集成在 CommonTable 内**，需要分页栏时在页面中单独引用，通常放在表格下方；将 `current`/`pageSize`/`total`/`totalPages` 与表格的 `pagination` 及数据源联动，`onChange` 更新父组件 state 后回传给 CommonTable 的 `pagination`。
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
@@ -131,24 +131,26 @@ const columns: CommonColumnType<Record>[] = [
 - 点击筛选栏右侧「保存」→ 输入名称 → 以 `SavedFilterPreset` 写入 localStorage。
 - 点击加号展开列表：上方为已保存筛选（带删除），下方为表格字段；选已保存项会将该组合条件回显到筛选栏并触发 `onChange`。
 
-### 与 CommonTable 一起使用
+### 与 CommonTable、TablePagination 一起使用
 
-在页面中单独渲染 FilterBuilder，再渲染 CommonTable；用 FilterBuilder 的 `value` / `onChange` 驱动本地过滤或请求参数，将过滤后的数据传给 CommonTable 的 `dataSource`。
+在页面中单独渲染 FilterBuilder、CommonTable、TablePagination；用 FilterBuilder 的 `value`/`onChange` 驱动过滤数据，用分页 state 驱动 CommonTable 的 `pagination` 与 TablePagination 的 props。
 
 ```tsx
 const [filterConditions, setFilterConditions] = useState<FilterCondition[]>([]);
+const [page, setPage] = useState(1);
+const [pageSize, setPageSize] = useState(10);
 const filteredData = useMemo(() => applyFilters(data, filterConditions), [data, filterConditions]);
+const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
 
 <div className="flex flex-col gap-4">
-  <FilterBuilder
-    id="my-filter"
-    fields={filterFields}
-    value={filterConditions}
-    onChange={setFilterConditions}
-    variant="bar"
-    formatConditionLabel={formatFilterLabel}
+  <FilterBuilder id="my-filter" fields={filterFields} value={filterConditions} onChange={setFilterConditions} variant="bar" formatConditionLabel={formatFilterLabel} />
+  <CommonTable
+    columns={columns}
+    dataSource={filteredData}
+    rowKey="id"
+    pagination={{ current: page, pageSize, serverSide: false, onChange: (p, s) => { setPage(p); setPageSize(s); } }}
   />
-  <CommonTable columns={columns} dataSource={filteredData} rowKey="id" pagination={{ current: 1, pageSize: 10 }} />
+  <TablePagination current={page} pageSize={pageSize} total={filteredData.length} totalPages={totalPages} onChange={(p, s) => { setPage(p); setPageSize(s); }} />
 </div>
 ```
 
@@ -168,37 +170,9 @@ const filteredData = useMemo(() => applyFilters(data, filterConditions), [data, 
 
 ---
 
-### 自定义分页
-
-`pagination` 为对象时可传 `render: (props: PaginationRenderProps) => ReactNode`。  
-`props` 含 `current`、`pageSize`、`total`、`totalPages`、`onChange(page, pageSize)`，由你完全自定义分页区域；传入后不再渲染默认分页栏。
-
-```tsx
-<CommonTable
-  pagination={{
-    current: 1,
-    pageSize: 10,
-    total: 100,
-    render: ({ current, pageSize, total, totalPages, onChange }) => (
-      <MyPagination
-        page={current}
-        pageSize={pageSize}
-        total={total}
-        totalPages={totalPages}
-        onPageChange={(p) => onChange(p, pageSize)}
-        onPageSizeChange={(s) => onChange(1, s)}
-      />
-    ),
-  }}
-  // ...
-/>
-```
-
----
-
 ## 类型速查
 
-- **PaginationConfig**：`current`, `pageSize`, `total?`, `serverSide?`, `onChange?`, `render?`（自定义分页；不传 `render` 时 CommonTable 使用内置 TablePagination）
+- **PaginationConfig**：`current`, `pageSize`, `total?`, `serverSide?`, `onChange?`（仅控制数据；分页 UI 用 TablePagination 单独渲染）
 - **PaginationRenderProps**：`current`, `pageSize`, `total`, `totalPages`, `onChange(page, pageSize)`
 - **TablePaginationProps**：与 PaginationRenderProps 同源数据 + `customRender?`, `pageSizeOptions?`
 - **RowSelection**：`type?`, `selectedRowKeys?`, `preserveSelectedRowKeys?`, `fixed?`, `onChange?`
@@ -211,7 +185,7 @@ const filteredData = useMemo(() => applyFilters(data, filterConditions), [data, 
 
 ## 示例
 
-完整用法见项目内 `src/examples/TableDemo.tsx`：FilterBuilder 单独放在表格上方，列定义、固定列、列设置、分页及筛选条件与表格数据联动（取交集过滤）。
+完整用法见项目内 `src/examples/TableDemo.tsx`：FilterBuilder 在表格上方、TablePagination 在表格下方单独引用，列定义、固定列、列设置、分页及筛选条件与表格数据联动（取交集过滤）。
 
 ---
 

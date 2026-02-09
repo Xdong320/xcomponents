@@ -6,7 +6,6 @@ import React, {
   useState,
 } from "react";
 import { ColumnSettings } from "./ColumnSettings";
-import { TablePagination } from "./TablePagination";
 import type {
   CommonColumnType,
   CommonTableProps,
@@ -995,20 +994,7 @@ export function CommonTable<T extends Record<string, any> = any>({
         </table>
       </div>
 
-      {paginationConfig !== false && (
-        <TablePagination
-          current={isServerSide ? currentPage : effectiveCurrentPage}
-          pageSize={pageSize}
-          total={isServerSide ? (paginationConfig.total ?? 0) : total}
-          totalPages={
-            isServerSide
-              ? Math.max(1, Math.ceil((paginationConfig.total ?? 0) / pageSize))
-              : totalPages
-          }
-          onChange={handlePaginationChange}
-          customRender={paginationConfig.render}
-        />
-      )}
+      {/* 分页不集成：需用时在页面中单独引用 TablePagination，与 pagination 的 current/pageSize/total/onChange 联动 */}
     </div>
   );
 }

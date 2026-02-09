@@ -1,7 +1,8 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CommonTable,
   FilterBuilder,
+  TablePagination,
   type CommonColumnType,
   type FilterCondition,
   type FilterConditionDateValue,
@@ -208,6 +209,8 @@ export function TableDemo() {
   const [visibleKeys, setVisibleKeys] = useState<Key[]>(
     columns.map((c) => c.key ?? c.dataIndex).filter(Boolean) as Key[],
   );
+  const [paginationCurrent, setPaginationCurrent] = useState(1);
+  const [paginationPageSize, setPaginationPageSize] = useState(10);
 
   const handleTableChange = useCallback(
     (
@@ -223,6 +226,7 @@ export function TableDemo() {
 
   const handleFilterChange = useCallback((conditions: FilterCondition[]) => {
     setFilterConditions(conditions);
+    setPaginationCurrent(1);
   }, []);
 
   const filteredData = useMemo(() => {
@@ -298,6 +302,16 @@ export function TableDemo() {
     });
   }, [filterConditions]);
 
+  const paginationTotalPages = Math.max(
+    1,
+    Math.ceil(filteredData.length / paginationPageSize),
+  );
+  useEffect(() => {
+    if (paginationCurrent > paginationTotalPages) {
+      setPaginationCurrent(paginationTotalPages);
+    }
+  }, [paginationTotalPages, paginationCurrent]);
+
   const formatFilterLabel = useCallback((c: FilterCondition) => {
     if (c.type === "date" || c.type === "dateRange") {
       const v = c.value as FilterConditionDateValue | undefined;
@@ -337,9 +351,13 @@ export function TableDemo() {
             rowKey="key"
             searchPlaceholder="搜索"
             pagination={{
-              current: 1,
-              pageSize: 10,
+              current: paginationCurrent,
+              pageSize: paginationPageSize,
               serverSide: false,
+              onChange: (page, pageSize) => {
+                setPaginationCurrent(page);
+                setPaginationPageSize(pageSize);
+              },
             }}
             scroll={{ y: 500, x: 1200 }}
             rowSelection={{
@@ -355,9 +373,19 @@ export function TableDemo() {
               visibleKeys,
               onChange: setVisibleKeys,
             }}
-          onChange={handleTableChange}
-          bordered={false}
-          size="middle"
+            onChange={handleTableChange}
+            bordered={false}
+            size="middle"
+          />
+          <TablePagination
+            current={paginationCurrent}
+            pageSize={paginationPageSize}
+            total={filteredData.length}
+            totalPages={paginationTotalPages}
+            onChange={(page, pageSize) => {
+              setPaginationCurrent(page);
+              setPaginationPageSize(pageSize);
+            }}
           />
         </div>
       </div>

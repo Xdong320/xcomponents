@@ -2,8 +2,8 @@
 
 ## 组件关系说明
 
-- **CommonTable**：主表格，不含 FilterBuilder；需要筛选时在页面中单独引用 FilterBuilder，通常放在表格上方，将 `value` / `onChange` 与表格数据或接口联动。
-- **TablePagination**：分页组件，CommonTable 在开启分页且未传 `pagination.render` 时内部使用；也可单独引用。
+- **CommonTable**：主表格，不含 FilterBuilder、不含分页栏。需要筛选时单独引用 FilterBuilder（通常放表格上方）；需要分页栏时单独引用 TablePagination（通常放表格下方），`pagination` 仅控制当前页/每页条数等数据行为。
+- **TablePagination**：分页组件，不集成在 CommonTable 内，需用时单独引用并放在表格下方，与 `pagination` 的 current/pageSize/onChange 及数据源联动。
 - **FilterBuilder**：筛选条件组件，不集成在 CommonTable 内，需用时单独引用并自行布局（如放在表格上方）。
 
 ---
@@ -30,14 +30,13 @@
 | 无列设置 | 不传 `columnSettingsProps` | 显示全部列 |
 | 列设置清空 | 列设置里点「清空」 | 仅剩选择列（若有），空数据/加载行 colSpan 正确 |
 
-### 分页（TablePagination / CommonTable 内置）
+### 分页（TablePagination 单独引用）
 
 | 场景 | 操作 | 预期 |
 |------|------|------|
-| 第 5 页后筛选到 10 条 | 筛选使数据变少 | 自动回到有效页（如 1/1），不空白 |
-| 切换每页条数 | 选 20 条/页 | 当前页在有效范围内，列表与页码一致 |
-| 关闭分页 | `pagination={false}` | 不显示分页栏，展示全部数据 |
-| 自定义分页 | `pagination.render(props)` | 仅渲染自定义分页 UI，不渲染默认分页栏 |
+| 第 5 页后筛选到 10 条 | 筛选使数据变少 | 页面侧将当前页 clamp 到有效页（如 1/1），不空白 |
+| 切换每页条数 | 选 20 条/页 | TablePagination 与 CommonTable 的 pagination 联动，列表与页码一致 |
+| 不需要分页 | 不传 `pagination` 或 `pagination={false}` 且不渲染 TablePagination | 表格展示全部数据，无分页栏 |
 
 ### 排序与列筛选
 
