@@ -577,7 +577,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                       }
                       onChange={(keys) => {
                         columnSettingsProps.onChange?.(keys);
-                        setColumnSettingsOpen(false);
+                        // 不在此处关闭弹窗，仅点击弹窗外部（上方 overlay）时关闭
                       }}
                     />
                   </div>
