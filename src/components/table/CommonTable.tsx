@@ -17,6 +17,7 @@ import type {
   TableFilters,
 } from "./types";
 
+// ========== 工具函数：列 key、取单元格值、滚动尺寸解析（改列宽/取数逻辑可改这里） ==========
 function getColumnKey<T>(col: CommonColumnType<T>, index: number): Key {
   if (col.key !== undefined && col.key !== null) return col.key;
   if (typeof col.dataIndex === "string") return col.dataIndex;
@@ -33,7 +34,7 @@ function getCellValue<T>(record: T, dataIndex: string | undefined): any {
   return value;
 }
 
-const SELECTION_COL_WIDTH = 40;
+const SELECTION_COL_WIDTH = 40; // 行选择列宽度，改选择列宽度改这里
 
 function parseScrollDimension(
   v: number | string | undefined,
@@ -63,6 +64,7 @@ export function CommonTable<T extends Record<string, any> = any>({
   locale: localeProp,
   onChange,
 }: CommonTableProps<T>) {
+  // ---------- 文案与行 key ----------
   const emptyText = localeProp?.emptyText ?? "暂无数据";
   const loadingText = localeProp?.loadingText ?? "加载中...";
   const getRowKey = useCallback(
@@ -71,6 +73,7 @@ export function CommonTable<T extends Record<string, any> = any>({
     [rowKey],
   );
 
+  // ---------- 列：全部 key、可见列（列设置联动，改列显隐逻辑改这里） ----------
   const allColumnKeys = useMemo(
     () => columns.map((col, index) => getColumnKey(col, index)),
     [columns],
@@ -85,6 +88,7 @@ export function CommonTable<T extends Record<string, any> = any>({
     });
   }, [columns, columnSettingsProps?.visibleKeys]);
 
+  // ---------- 滚动：y/x 解析、列布局与固定列偏移（改固定列/横向滚动改这里） ----------
   const scrollY = parseScrollDimension(scrollProp?.y);
   const scrollX = parseScrollDimension(scrollProp?.x);
   const scrollXNum =
@@ -96,6 +100,7 @@ export function CommonTable<T extends Record<string, any> = any>({
   const hasScrollX = scrollX != null;
 
   const columnLayout = useMemo(() => {
+    // 含选择列 + 数据列，每项 key/width/fixed
     const items: { key: Key; width: number; fixed?: "left" | "right" }[] = [];
     if (rowSelectionProp) {
       items.push({
@@ -134,6 +139,7 @@ export function CommonTable<T extends Record<string, any> = any>({
     return { leftOffsets: left, rightOffsets: right };
   }, [columnLayout]);
 
+  // ---------- 滚动容器与固定列阴影状态 ----------
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [scrollPos, setScrollPos] = useState({
     scrollLeft: 0,
@@ -195,6 +201,7 @@ export function CommonTable<T extends Record<string, any> = any>({
   const shadowLeftCell = "3px 0 5px -2px rgba(0,0,0,0.06)";
   const shadowRightCell = "-2px 0 4px -2px rgba(0,0,0,0.06)";
 
+  // ---------- 分页：受控/非受控、config（分页逻辑改这里，UI 由外部 TablePagination 渲染） ----------
   const [internalPagination, setInternalPagination] = useState({
     current: paginationProp === false ? 1 : (paginationProp?.current ?? 1),
     pageSize: paginationProp === false ? 10 : (paginationProp?.pageSize ?? 10),
@@ -228,6 +235,7 @@ export function CommonTable<T extends Record<string, any> = any>({
           onChange: paginationProp?.onChange,
         };
 
+  // ---------- 筛选、排序、行选择、列设置/筛选下拉 UI 状态 ----------
   const [filters, setFilters] = useState<TableFilters>({});
   const [sorter, setSorter] = useState<{ field?: string; order?: SortOrder }>({
     field: undefined,
@@ -245,6 +253,7 @@ export function CommonTable<T extends Record<string, any> = any>({
   const currentPage = paginationConfig !== false ? paginationConfig.current : 1;
   const pageSize = paginationConfig !== false ? paginationConfig.pageSize : 10;
 
+  // ---------- 数据管道：筛选 → 排序 → 分页切片（改筛选/排序/分页数据逻辑改这里） ----------
   const filteredData = useMemo(() => {
     let result = dataSource;
     visibleColumns.forEach((col, colIndex) => {
@@ -320,6 +329,7 @@ export function CommonTable<T extends Record<string, any> = any>({
     [dataSource, selectedRowKeys, getRowKey],
   );
 
+  // ---------- 事件：onChange 透传、分页/筛选/排序/行选择（改交互回调改这里） ----------
   const triggerOnChange = useCallback(
     (
       pagination: PaginationConfig,
@@ -503,6 +513,7 @@ export function CommonTable<T extends Record<string, any> = any>({
     [displayData, getRowKey, rowSelectionProp, dataSource],
   );
 
+  // ---------- 表头/单元格尺寸与边框类（改表格尺寸/边框样式改这里） ----------
   const rowSizeClass =
     size === "small"
       ? "py-1.5 px-3 text-sm"
@@ -521,7 +532,7 @@ export function CommonTable<T extends Record<string, any> = any>({
 
   return (
     <div className="flex flex-col ">
-      {/* 标题与列设置同一行：标题左对齐，搜索 + 列设置右对齐 */}
+      {/* ---------- 顶部栏：标题 + 搜索(可选) + 列设置按钮（改标题/列设置布局改这里） ---------- */}
       <div className="flex py-4 items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {title && (
@@ -529,18 +540,6 @@ export function CommonTable<T extends Record<string, any> = any>({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {/* <div className="relative">
-            <input
-              type="text"
-              placeholder={searchPlaceholder}
-              value={searchValue ?? ""}
-              onChange={(e) => onSearchChange?.(e.target.value)}
-              className="h-9 w-60 rounded-zxl border border-200 bg-0 pl-9 pr-3 text-sm text-950 outline-none placeholder:text-600 focus:border-primary"
-            />
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-600">
-              🔍
-            </span>
-          </div> */}
           {columnSettingsProps && (
             <div className="relative">
               <button
@@ -548,8 +547,18 @@ export function CommonTable<T extends Record<string, any> = any>({
                 onClick={() => setColumnSettingsOpen((v) => !v)}
                 className="flex items-center gap-1 rounded-zxl border border-200 bg-0 px-2.5 py-2 text-sm font-medium text-600 hover:bg-100"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
-                  <path d="M8.5 14.5H11.5V13H8.5V14.5ZM3.25 5.5V7H16.75V5.5H3.25ZM5.5 10.75H14.5V9.25H5.5V10.75Z" fill="currentColor" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  className="shrink-0"
+                >
+                  <path
+                    d="M8.5 14.5H11.5V13H8.5V14.5ZM3.25 5.5V7H16.75V5.5H3.25ZM5.5 10.75H14.5V9.25H5.5V10.75Z"
+                    fill="currentColor"
+                  />
                 </svg>
                 <span>列设置</span>
               </button>
@@ -579,6 +588,7 @@ export function CommonTable<T extends Record<string, any> = any>({
         </div>
       </div>
 
+      {/* ---------- 表格滚动容器 + table（改滚动区域样式/table 宽度改这里） ---------- */}
       <div
         ref={scrollContainerRef}
         onScroll={hasScroll ? handleScroll : undefined}
@@ -594,7 +604,7 @@ export function CommonTable<T extends Record<string, any> = any>({
         }
       >
         <table
-          className={`-mt-1 -mb-1 border-separate border-spacing-x-0 border-spacing-y-0 ${tableLayout} ${hasScrollX ? "table-fixed" : "w-full"}`}
+          className={`-mt-1 -mb-1 border-separate border-spacing-x-0 border-spacing-y-1 ${tableLayout} ${hasScrollX ? "table-fixed" : "w-full"}`}
           style={
             hasScrollX && scrollXNum > 0
               ? {
@@ -604,6 +614,7 @@ export function CommonTable<T extends Record<string, any> = any>({
               : undefined
           }
         >
+          {/* ---------- 表头：选择列 + 数据列（排序图标、筛选下拉）（改表头/排序/筛选 UI 改这里） ---------- */}
           <thead>
             <tr
               className={`rounded-t-xl bg-100 transition-shadow duration-200 ease-out ${scrollY != null ? "sticky top-0 z-[2]" : ""}`}
@@ -753,14 +764,51 @@ export function CommonTable<T extends Record<string, any> = any>({
                               next,
                             );
                           }}
-                          className="rounded p-0.5 text-600 hover:bg-100 hover:text-950"
+                          className="ml-0.5 flex flex-col items-center justify-center gap-1 rounded p-0.5 text-600 hover:bg-100 hover:text-950"
                           title="排序"
                         >
-                          {currentOrder === "ascend"
-                            ? "↑"
-                            : currentOrder === "descend"
-                              ? "↓"
-                              : "⇅"}
+                          <span
+                            className={
+                              currentOrder === "ascend"
+                                ? "opacity-100"
+                                : "opacity-40"
+                            }
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="9"
+                              height="5"
+                              viewBox="0 0 9 5"
+                              fill="none"
+                              className="block"
+                            >
+                              <path
+                                d="M4.5 0L9 4.5H0L4.5 0Z"
+                                fill="currentColor"
+                              />
+                            </svg>
+                          </span>
+                          <span
+                            className={
+                              currentOrder === "descend"
+                                ? "opacity-100"
+                                : "opacity-40"
+                            }
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="9"
+                              height="5"
+                              viewBox="0 0 9 5"
+                              fill="none"
+                              className="block"
+                            >
+                              <path
+                                d="M4.5 4.5L0 0H9L4.5 4.5Z"
+                                fill="currentColor"
+                              />
+                            </svg>
+                          </span>
                         </button>
                       )}
                       {hasFilter && (
@@ -833,6 +881,7 @@ export function CommonTable<T extends Record<string, any> = any>({
               })}
             </tr>
           </thead>
+          {/* ---------- 表体：加载中 / 空数据 / 数据行（改空态/加载态/行样式改这里） ---------- */}
           <tbody>
             {loading ? (
               <tr>
@@ -853,6 +902,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                 </td>
               </tr>
             ) : (
+              /* ---------- 数据行：选择列 + 数据列，固定列 left/right 与阴影 ---------- */
               displayData.map((record, index) => {
                 const key = getRowKey(record);
                 const rowKeySafe =

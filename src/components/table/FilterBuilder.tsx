@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   FilterBuilderProps,
   FilterCondition,
@@ -89,6 +89,9 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
   variant = "bar",
   formatConditionLabel = defaultTagLabel,
 }) => {
+  // 添加筛选按钮下拉的对齐方式：防止在极左/极右时弹层被遮挡
+  const addAlignRef = useRef<HTMLDivElement | null>(null);
+  const [addAlign, setAddAlign] = useState<"left" | "right">("right");
   const [conditions, setConditions] = useState<FilterCondition[]>(() =>
     value?.length ? value : [],
   );
@@ -238,10 +241,29 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
           {conditions.length === 0 && (
             <span className="text-sm text-gray-400">添加筛选条件</span>
           )}
-          <div className="relative flex shrink-0 items-center">
+          <div ref={addAlignRef} className="relative flex shrink-0 items-center">
             <button
               type="button"
-              onClick={() => setAddOpen((v) => !v)}
+              onClick={() => {
+                setAddOpen((v) => {
+                  const next = !v;
+                  if (
+                    next &&
+                    typeof window !== "undefined" &&
+                    addAlignRef.current
+                  ) {
+                    const rect = addAlignRef.current.getBoundingClientRect();
+                    const panelWidth = 224; // 下拉面板宽度 w-56
+                    // 按钮离左侧太近时，面板靠左对齐；否则默认靠右，避免被页面左右遮挡
+                    if (rect.left < panelWidth) {
+                      setAddAlign("left");
+                    } else {
+                      setAddAlign("right");
+                    }
+                  }
+                  return next;
+                });
+              }}
               className="flex h-5 w-5 items-center justify-center rounded-full border border-200 bg-0 text-600 shadow-sm hover:bg-100 hover:text-950"
               aria-label="添加筛选"
             >
@@ -266,7 +288,11 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                   aria-hidden
                   onClick={() => setAddOpen(false)}
                 />
-                <div className="absolute right-0 top-full z-30 mt-1 max-h-72 w-56 overflow-auto rounded-xl border border-200 bg-0 py-2 text-sm shadow-small">
+                <div
+                  className={`absolute top-full z-30 mt-1 max-h-72 w-56 overflow-auto rounded-xl border border-200 bg-0 py-2 text-sm shadow-small ${
+                    addAlign === "left" ? "left-0" : "right-0"
+                  }`}
+                >
                   <div className="mb-1 px-3 py-1 text-sm font-medium text-600">
                     已保存的筛选
                   </div>
