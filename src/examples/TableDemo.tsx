@@ -337,19 +337,27 @@ export function TableDemo() {
         </h1>
         <div className="flex flex-col gap-4">
           <FilterBuilder
+            // 必选：实例唯一 id（用于本地存储已保存筛选）
             id="session-list-filter"
+            // 必选：可筛字段定义（字段名、类型、操作符、下拉选项等）
             fields={filterFields}
+            // 可选：当前筛选条件（受控）；不传则内部维护
             value={filterConditions}
+            // 可选：条件变更回调（与外部 state 联动）
             onChange={handleFilterChange}
+            // 可选：展示形态，'bar' = 顶部标签条，'panel' = 独立筛选面板
             variant="bar"
+            // 可选：自定义标签文案格式化
             formatConditionLabel={formatFilterLabel}
           />
           <CommonTable<SessionRecord>
-            title="会话列表"
+            // 必选：列配置
             columns={columns}
+            // 必选：数据源（本示例用过滤后的数据）
             dataSource={filteredData}
+            // 可选：行 key 字段名或函数，默认 "key"
             rowKey="key"
-            searchPlaceholder="搜索"
+            // 可选：分页配置；传 false 关闭分页（这里只做数据切片，UI 由下方 TablePagination 渲染）
             pagination={{
               current: paginationCurrent,
               pageSize: paginationPageSize,
@@ -359,7 +367,7 @@ export function TableDemo() {
                 setPaginationPageSize(pageSize);
               },
             }}
-            scroll={{ y: 500, x: 1200 }}
+            // 可选：行选择配置（多选、单选、受控 selectedRowKeys 等）
             rowSelection={{
               type: "checkbox",
               fixed: "left",
@@ -368,24 +376,45 @@ export function TableDemo() {
                 console.log("选中行", selectedRowKeys, selectedRows);
               },
             }}
+            // 可选：是否显示边框，默认 true
+            bordered={false}
+            // 可选：表格尺寸 'small' | 'middle' | 'large'
+            size="middle"
+            // 可选：表格左上角标题
+            title="会话列表"
+            // 可选：搜索占位符（当前示例暂未开启搜索输入框）
+            searchPlaceholder="搜索"
+            // 可选：列设置配置（显示/隐藏列）
             columnSettingsProps={{
               allColumns: columns,
               visibleKeys,
               onChange: setVisibleKeys,
             }}
+            // 可选：表头/列固定与滚动区域
+            scroll={{ y: 500, x: 1200 }}
+            // 可选：文案本地化（空态、加载中文案），默认内部文案
+            // locale={{ emptyText: "暂无数据", loadingText: "加载中..." }}
+            // 可选：分页 / 筛选 / 排序变化回调
             onChange={handleTableChange}
-            bordered={false}
-            size="middle"
           />
           <TablePagination
+            // 必选：当前页（从 1 开始）
             current={paginationCurrent}
+            // 必选：每页条数
             pageSize={paginationPageSize}
+            // 必选：总条数（这里用过滤后的总数）
             total={filteredData.length}
+            // 必选：总页数（建议由外部根据 total/pageSize 计算）
             totalPages={paginationTotalPages}
+            // 必选：页码或每页条数变更回调
             onChange={(page, pageSize) => {
               setPaginationCurrent(page);
               setPaginationPageSize(pageSize);
             }}
+            // 可选：自定义分页 UI；传入时只渲染 customRender 的内容
+            // customRender={(props) => <YourCustomPagination {...props} />}
+            // 可选：每页条数下拉选项，默认 [10, 20, 50, 100]
+            // pageSizeOptions={[10, 20, 50, 100]}
           />
         </div>
       </div>

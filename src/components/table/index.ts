@@ -1,4 +1,5 @@
-export { CommonTable } from './CommonTable';
+// 组件导出：默认推荐使用 <Table />，也保留 CommonTable 以兼容老代码
+export { CommonTable, CommonTable as Table } from './CommonTable';
 export { FilterBuilder } from './FilterBuilder';
 export { ColumnSettings } from './ColumnSettings';
 export { TablePagination } from './TablePagination';
