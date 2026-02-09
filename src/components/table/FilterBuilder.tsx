@@ -231,7 +231,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
           {conditions.map((c, index) => (
             <span
               key={`${c.field}-${index}`}
-              className="inline-flex items-center gap-1 rounded-lg border border-200 bg-100 px-2.5 py-1 text-sm text-950 shadow-lg"
+              className="inline-flex items-center gap-1 rounded-lg border border-200 bg-100 px-2.5 py-1 text-sm text-950 shadow-sm"
             >
               {formatConditionLabel(c)}
               <button
@@ -362,7 +362,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
             )}
           </div>
         </div>
-        <div className="flex shrink-0 items-center">
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => setSaveModalOpen(true)}
@@ -381,6 +381,30 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
               <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
               <polyline points="17 21 17 13 7 13 7 21" />
               <polyline points="7 3 7 8 15 8" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setConditions([]);
+              onChange?.([]);
+            }}
+            className="flex h-6 w-6 items-center justify-center rounded-lg border border-200 bg-0 text-600 shadow-sm hover:bg-100 hover:text-950"
+            aria-label="清空筛选"
+            title="清空所有已选筛选条件"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+              <line x1="10" y1="11" x2="10" y2="17" />
+              <line x1="14" y1="11" x2="14" y2="17" />
             </svg>
           </button>
         </div>
