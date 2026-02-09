@@ -161,7 +161,7 @@ export function TablePagination({
           onChange={(e) => {
             onChange(1, Number(e.target.value));
           }}
-          className="cursor-pointer appearance-auto rounded-lg border border-200 bg-0 py-1.5 pl-2.5 pr-1.5 text-sm text-sub-600 shadow-small outline-none"
+          className="cursor-pointer appearance-auto rounded-lg border border-200 bg-0 py-1.5 pl-2.5 pr-1.5 text-sm text-sub-600 shadow-lg outline-none"
         >
           {pageSizeOptions.map((n) => (
             <option key={n} value={n}>

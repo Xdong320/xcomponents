@@ -200,7 +200,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
   if (variant !== "bar") {
     return (
       <div
-        className={`flex flex-col gap-2 rounded-xl border border-200 bg-0 p-3 shadow-small ${className ?? ""}`}
+        className={`flex flex-col gap-2 rounded-xl border border-200 bg-0 p-3 shadow-lg ${className ?? ""}`}
       >
         <div className="text-sm text-600">筛选条件（请使用 variant="bar"）</div>
       </div>
@@ -231,7 +231,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
           {conditions.map((c, index) => (
             <span
               key={`${c.field}-${index}`}
-              className="inline-flex items-center gap-1 rounded-lg border border-200 bg-100 px-2.5 py-1 text-sm text-950 shadow-small"
+              className="inline-flex items-center gap-1 rounded-lg border border-200 bg-100 px-2.5 py-1 text-sm text-950 shadow-lg"
             >
               {formatConditionLabel(c)}
               <button
@@ -298,7 +298,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                   onClick={() => setAddOpen(false)}
                 />
                 <div
-                  className={`absolute top-full z-30 mt-1 max-h-72 w-56 overflow-auto rounded-xl border border-200 bg-0 py-2 text-sm shadow-small ${
+                  className={`absolute top-full z-30 mt-1 max-h-72 w-56 overflow-auto rounded-xl border border-200 bg-0 py-2 text-sm shadow-lg ${
                     addAlign === "left" ? "left-0" : "right-0"
                   }`}
                 >
@@ -390,7 +390,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
       {saveModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div
-            className="w-96 rounded-xl border border-200 bg-0 p-4 shadow-small"
+            className="w-96 rounded-xl border border-200 bg-0 p-4 shadow-lg"
             role="dialog"
             aria-labelledby="save-filter-title"
           >
@@ -484,7 +484,7 @@ function ConditionDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <div
-        className="w-[320px] rounded-xl border border-200 bg-0 p-4 shadow-small"
+        className="w-[320px] rounded-xl border border-200 bg-0 p-4 shadow-lg"
         role="dialog"
         aria-labelledby="condition-dialog-title"
       >

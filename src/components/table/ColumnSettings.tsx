@@ -1,8 +1,7 @@
-import React from 'react';
-import type { ColumnSettingsProps } from './types';
+import React from "react";
+import type { ColumnSettingsProps } from "./types";
 
-interface InternalColumnSettingsProps<T = any>
-  extends ColumnSettingsProps<T> {
+interface InternalColumnSettingsProps<T = any> extends ColumnSettingsProps<T> {
   className?: string;
 }
 
@@ -36,7 +35,7 @@ export function ColumnSettings<T = any>({
 
   return (
     <div
-      className={`w-56 rounded-xl border border-200 bg-0 p-2 text-sm shadow-small transition-opacity duration-200 ${className ?? ''}`}
+      className={`w-56 rounded-xl border border-200 bg-0 p-2 text-sm shadow-lg transition-opacity duration-200 ${className ?? ""}`}
     >
       <div className="mb-2 flex items-center justify-between text-sm font-medium text-600">
         <span className="font-medium text-950">列设置</span>
@@ -73,9 +72,7 @@ export function ColumnSettings<T = any>({
                 checked={checked}
                 onChange={() => toggleKey(key)}
               />
-              <span className="truncate">
-                {col.title as any}
-              </span>
+              <span className="truncate">{col.title as any}</span>
             </label>
           );
         })}
@@ -83,4 +80,3 @@ export function ColumnSettings<T = any>({
     </div>
   );
 }
-

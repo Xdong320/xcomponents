@@ -832,7 +832,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                                 aria-hidden
                                 onClick={() => setFilterDropdownOpen(null)}
                               />
-                              <div className="absolute left-0 top-full z-20 mt-1 w-40 rounded-xl border border-200 bg-0 p-2 shadow-small transition-opacity duration-150">
+                              <div className="absolute left-0 top-full z-20 mt-1 w-40 rounded-xl border border-200 bg-0 p-2 shadow-lg transition-opacity duration-150">
                                 {(col.filters || []).map((f) => {
                                   const selected = (
                                     filters[key] ?? []
