@@ -106,14 +106,14 @@ const columns: CommonColumnType<SessionRecord>[] = [
     fixed: "left",
     render: (val: string) => (
       <span className="flex items-center gap-2">
-        <span className="truncate font-normal text-figma-text-primary">
+        <span className="truncate font-normal text-950">
           {val.length > 20
             ? `${val.slice(0, 8)}-${val.slice(8, 12)}-${val.slice(12, 16)}-...`
             : val}
         </span>
         <button
           type="button"
-          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-figma-tag border border-figma-border bg-figma-surface-alt text-figma-text-secondary hover:bg-figma-surface hover:text-figma-text-primary"
+          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-tag border border-200 bg-100 text-600 hover:bg-0 hover:text-950"
           title="复制"
           aria-label="复制"
         >
@@ -188,7 +188,7 @@ const columns: CommonColumnType<SessionRecord>[] = [
     render: () => (
       <button
         type="button"
-        className="inline-flex h-6 w-6 items-center justify-center rounded text-figma-text-secondary hover:bg-figma-surface-alt hover:text-figma-text-primary"
+        className="inline-flex h-6 w-6 items-center justify-center rounded text-600 hover:bg-100 hover:text-950"
         title="更多"
         aria-label="更多"
       >
@@ -330,9 +330,9 @@ export function TableDemo() {
   }, []);
 
   return (
-    <div className="min-h-screen min-w-0 overflow-x-hidden bg-figma-page p-6 font-sans">
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-50 p-6 font-sans">
       <div className="mx-auto min-w-0 max-w-[1320px]">
-        <h1 className="mb-4 text-figma-label-md tracking-figma-md text-figma-text-primary">
+        <h1 className="mb-4 text-base font-medium tracking-normal text-950">
           会话洞察 · 会话列表
         </h1>
         <div className="flex flex-col gap-4">

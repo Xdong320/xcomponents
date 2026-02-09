@@ -10,11 +10,11 @@ const ArrowLeftIcon = () => (
     height="20"
     viewBox="0 0 20 20"
     fill="none"
-    className="shrink-0"
+    className="shrink-0 text-600"
   >
     <path
       d="M9.20431 9.99923L12.9168 13.7117L11.8563 14.7722L7.08331 9.99923L11.8563 5.22623L12.9168 6.28673L9.20431 9.99923Z"
-      fill="#45556C"
+      fill="currentColor"
     />
   </svg>
 );
@@ -30,7 +30,7 @@ const ArrowRightIcon = () => (
   >
     <path
       d="M10.7958 9.99923L7.08331 6.28673L8.14381 5.22623L12.9168 9.99923L8.14381 14.7722L7.08331 13.7117L10.7958 9.99923Z"
-      fill="#45556C"
+      fill="currentColor"
     />
   </svg>
 );
@@ -111,40 +111,25 @@ export function TablePagination({
     );
   }
 
-  // Figma 设计规范：Pagination Group [1.0]（会话洞察）
-  const figma = {
-    text: "#45556C", // fill_YI4X1K Label/Small
-    activeBg: "#F5F7FA", // fill_T405WY
-    dropdownBorder: "#E1E4EA", // stroke_QRJPF4
-    dropdownText: "#525866", // fill_XX9VQ7 Paragraph/Small
-    dropdownShadow: "0px 1px 2px 0px rgba(10, 13, 20, 0.03)",
-  };
-
   return (
-    <div
-      className="flex py-4 w-full items-center justify-between gap-2"
-      style={{ gap: 8 }}
-    >
-      {/* 左侧占位，使中间页码组整体居中 */}
+    <div className="flex w-full items-center justify-between gap-2 py-4 [column-gap:8px]">
       <div className="flex-1" />
-      {/* 中间：上一页 + 页码 + 下一页，gap 8px */}
-      <div className="flex items-center" style={{ gap: 8 }}>
+      <div className="flex items-center [column-gap:8px]">
         <button
           type="button"
           aria-label="上一页"
           disabled={current <= 1}
           onClick={() => onChange(current - 1, pageSize)}
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[6px] transition-colors disabled:opacity-40 hover:bg-[#F5F7FA]"
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[6px] text-600 transition-colors disabled:opacity-40 hover:bg-100"
         >
           <ArrowLeftIcon />
         </button>
-        <div className="flex items-center" style={{ gap: 8 }}>
+        <div className="flex items-center [column-gap:8px]">
           {pageItems.map((item, i) =>
             item === "ellipsis" ? (
               <span
                 key={`e-${i}`}
-                className="flex h-8 w-8 items-center justify-center text-xs font-medium"
-                style={{ color: figma.text }}
+                className="flex h-8 w-8 items-center justify-center text-xs font-medium text-600"
               >
                 …
               </span>
@@ -153,12 +138,7 @@ export function TablePagination({
                 key={item}
                 type="button"
                 onClick={() => onChange(item, pageSize)}
-                className="flex h-8 min-w-[32px] items-center justify-center rounded-full px-2 text-xs font-medium transition-colors hover:bg-[#F5F7FA]"
-                style={{
-                  backgroundColor:
-                    item === current ? figma.activeBg : undefined,
-                  color: figma.text,
-                }}
+                className={`flex h-8 min-w-[32px] items-center justify-center rounded-full px-2 text-xs font-medium text-600 transition-colors hover:bg-100 ${item === current ? "bg-100" : ""}`}
               >
                 {item}
               </button>
@@ -170,25 +150,18 @@ export function TablePagination({
           aria-label="下一页"
           disabled={current >= totalPages}
           onClick={() => onChange(current + 1, pageSize)}
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[6px] transition-colors disabled:opacity-40 hover:bg-[#F5F7FA]"
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[6px] text-600 transition-colors disabled:opacity-40 hover:bg-100"
         >
           <ArrowRightIcon />
         </button>
       </div>
-      {/* 右侧：每页条数选择器 Compact Dropdowns - padding 6 10 6 6, border 1px, radius 8px */}
       <div className="flex flex-1 items-center justify-end">
         <select
           value={pageSize}
           onChange={(e) => {
             onChange(1, Number(e.target.value));
           }}
-          className="cursor-pointer appearance-auto rounded-lg border bg-white text-xs outline-none"
-          style={{
-            color: figma.dropdownText,
-            borderColor: figma.dropdownBorder,
-            boxShadow: figma.dropdownShadow,
-            padding: "6px 6px 6px 10px",
-          }}
+          className="cursor-pointer appearance-auto rounded-lg border border-200 bg-0 py-1.5 pl-2.5 pr-1.5 text-xs text-sub-600 shadow-small outline-none"
         >
           {pageSizeOptions.map((n) => (
             <option key={n} value={n}>

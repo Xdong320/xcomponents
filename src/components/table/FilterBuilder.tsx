@@ -185,9 +185,9 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
   if (variant !== "bar") {
     return (
       <div
-        className={`flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm ${className ?? ""}`}
+        className={`flex flex-col gap-2 rounded-table border border-200 bg-0 p-3 shadow-small ${className ?? ""}`}
       >
-        <div className="text-figma-paragraph text-figma-text-secondary">
+        <div className="text-sm text-600">
           筛选条件（请使用 variant="bar"）
         </div>
       </div>
@@ -197,9 +197,9 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
   return (
     <>
       <div
-        className={`flex flex-wrap items-center gap-2 rounded-figma-card border-b border-figma-border bg-figma-surface px-2.5 py-2 text-figma-paragraph text-figma-text-primary ${className ?? ""}`}
+        className={`flex flex-wrap items-center gap-2 rounded-card border-b border-200 bg-0 px-2.5 py-2 text-sm text-950 ${className ?? ""}`}
       >
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-figma-surface-alt text-figma-text-secondary">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-100 text-600">
           <span className="flex flex-col gap-0.5">
             <span className="block h-0.5 w-3 rounded bg-current" />
             <span className="block h-0.5 w-2 rounded bg-current opacity-80" />
@@ -210,13 +210,13 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
           {conditions.map((c, index) => (
             <span
               key={`${c.field}-${index}`}
-              className="inline-flex items-center gap-1 rounded-figma-tag border border-figma-border bg-figma-surface-alt px-2.5 py-1 text-figma-paragraph text-figma-text-primary shadow-figma-small"
+              className="inline-flex items-center gap-1 rounded-tag border border-200 bg-100 px-2.5 py-1 text-sm text-950 shadow-small"
             >
               {formatConditionLabel(c)}
               <button
                 type="button"
                 onClick={() => removeCondition(index)}
-                className="ml-0.5 text-figma-text-secondary hover:text-figma-text-primary"
+                className="ml-0.5 text-600 hover:text-950"
                 aria-label="移除"
               >
                 ×
@@ -224,7 +224,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
             </span>
           ))}
           {conditions.length === 0 && (
-            <span className="text-figma-paragraph text-figma-text-secondary">
+            <span className="text-sm text-600">
               添加筛选条件
             </span>
           )}
@@ -233,7 +233,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
           <button
             type="button"
             onClick={() => setAddOpen((v) => !v)}
-            className="flex h-6 w-6 items-center justify-center rounded-full border border-figma-border bg-figma-surface text-figma-text-secondary shadow-figma-small hover:bg-figma-surface-alt hover:text-figma-text-primary"
+            className="flex h-6 w-6 items-center justify-center rounded-full border border-200 bg-0 text-600 shadow-small hover:bg-100 hover:text-950"
             aria-label="添加筛选"
           >
             ＋
@@ -245,12 +245,12 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                 aria-hidden
                 onClick={() => setAddOpen(false)}
               />
-              <div className="absolute right-0 top-full z-30 mt-1 max-h-72 w-56 overflow-auto rounded-figma-table border border-figma-border bg-figma-surface py-2 text-figma-paragraph shadow-figma-small">
-                <div className="mb-1 px-3 py-1 text-figma-label-sm text-figma-text-secondary">
+              <div className="absolute right-0 top-full z-30 mt-1 max-h-72 w-56 overflow-auto rounded-table border border-200 bg-0 py-2 text-sm shadow-small">
+                <div className="mb-1 px-3 py-1 text-sm font-medium text-600">
                   已保存的筛选
                 </div>
                 {presets.length === 0 && (
-                  <div className="px-3 py-1.5 text-figma-paragraph text-figma-text-secondary">
+                  <div className="px-3 py-1.5 text-sm text-600">
                     暂无已保存
                   </div>
                 )}
@@ -263,13 +263,13 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                     onKeyDown={(e) =>
                       e.key === "Enter" && handleSelectSavedPreset(p)
                     }
-                    className="flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-left text-figma-paragraph text-figma-text-primary hover:bg-figma-surface-alt"
+                    className="flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-left text-sm text-950 hover:bg-100"
                   >
                     <span className="min-w-0 truncate">{p.name}</span>
                     <button
                       type="button"
                       onClick={(e) => handleDeletePreset(e, p.id)}
-                      className="shrink-0 rounded p-0.5 text-figma-text-secondary hover:bg-figma-border hover:text-figma-text-primary"
+                      className="shrink-0 rounded p-0.5 text-600 hover:bg-200 hover:text-950"
                       aria-label="删除"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -280,8 +280,8 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                     </button>
                   </div>
                 ))}
-                <div className="my-1 border-t border-figma-border" />
-                <div className="mb-1 px-3 py-1 text-figma-label-sm text-figma-text-secondary">
+                <div className="my-1 border-t border-200" />
+                <div className="mb-1 px-3 py-1 text-sm font-medium text-600">
                   表格字段
                 </div>
                 {fields.map((field) => (
@@ -289,7 +289,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                     key={field.field}
                     type="button"
                     onClick={() => handleSelectField(field.field)}
-                    className="block w-full px-3 py-1.5 text-left text-figma-paragraph text-figma-text-primary hover:bg-figma-surface-alt"
+                    className="block w-full px-3 py-1.5 text-left text-sm text-950 hover:bg-100"
                   >
                     {field.label}
                   </button>
@@ -300,7 +300,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
           <button
             type="button"
             onClick={() => setSaveModalOpen(true)}
-            className="flex h-6 w-6 items-center justify-center rounded-figma-tag border border-figma-border bg-figma-surface text-figma-text-secondary shadow-figma-small hover:bg-figma-surface-alt hover:text-figma-text-primary"
+            className="flex h-6 w-6 items-center justify-center rounded-tag border border-200 bg-0 text-600 shadow-small hover:bg-100 hover:text-950"
             aria-label="保存筛选"
             title="保存当前筛选条件"
           >
@@ -317,14 +317,14 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
       {saveModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div
-            className="w-96 rounded-figma-table border border-figma-border bg-figma-surface p-4 shadow-figma-small"
+            className="w-96 rounded-table border border-200 bg-0 p-4 shadow-small"
             role="dialog"
             aria-labelledby="save-filter-title"
           >
-            <h3 id="save-filter-title" className="mb-3 text-figma-label-md text-figma-text-primary">
+            <h3 id="save-filter-title" className="mb-3 text-base font-medium text-950">
               保存筛选
             </h3>
-            <label className="mb-2 block text-figma-paragraph text-figma-text-secondary">
+            <label className="mb-2 block text-sm text-600">
               Filter label<span className="text-red-500">*</span>
             </label>
             <input
@@ -332,7 +332,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
               value={saveName}
               onChange={(e) => setSaveName(e.target.value)}
               placeholder="例：会话时长80-120s"
-              className="mb-4 w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none placeholder:text-figma-text-secondary focus:border-figma-primary"
+              className="mb-4 w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none placeholder:text-600 focus:border-primary"
             />
             <div className="flex justify-end gap-2">
               <button
@@ -341,7 +341,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                   setSaveModalOpen(false);
                   setSaveName("");
                 }}
-                className="rounded-figma-btn border border-figma-border px-3 py-1.5 text-figma-paragraph text-figma-text-secondary hover:bg-figma-surface-alt"
+                className="rounded-btn border border-200 px-3 py-1.5 text-sm text-600 hover:bg-100"
               >
                 取消
               </button>
@@ -349,7 +349,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                 type="button"
                 onClick={handleSavePreset}
                 disabled={!saveName.trim()}
-                className="rounded-figma-btn bg-figma-primary px-3 py-1.5 text-figma-paragraph font-medium text-white hover:opacity-90 disabled:opacity-50"
+                className="rounded-btn bg-primary px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
               >
                 保存
               </button>
@@ -404,18 +404,18 @@ function ConditionDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <div
-        className="w-[320px] rounded-figma-table border border-figma-border bg-figma-surface p-4 shadow-figma-small"
+        className="w-[320px] rounded-table border border-200 bg-0 p-4 shadow-small"
         role="dialog"
         aria-labelledby="condition-dialog-title"
       >
         <div className="mb-3 flex items-center justify-between">
-          <h3 id="condition-dialog-title" className="text-figma-label-md text-figma-text-primary">
+          <h3 id="condition-dialog-title" className="text-base font-medium text-950">
             {condition.label}
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-figma-text-secondary hover:bg-figma-surface-alt hover:text-figma-text-primary"
+            className="rounded p-1 text-600 hover:bg-100 hover:text-950"
             aria-label="关闭"
           >
             ×
@@ -425,7 +425,7 @@ function ConditionDialog({
         {isDate && (
           <>
             <div className="mb-2">
-              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">before/after</label>
+              <label className="mb-1 block text-sm text-600">before/after</label>
               <select
                 value={dateValue.when ?? "after"}
                 onChange={(e) =>
@@ -436,14 +436,14 @@ function ConditionDialog({
                     },
                   })
                 }
-                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 <option value="before">before</option>
                 <option value="after">after</option>
               </select>
             </div>
             <div className="mb-2">
-              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">日期 (MM/DD/YYYY)</label>
+              <label className="mb-1 block text-sm text-600">日期 (MM/DD/YYYY)</label>
               <input
                 type="date"
                 value={dateValue.date ?? ""}
@@ -452,11 +452,11 @@ function ConditionDialog({
                     value: { ...dateValue, date: e.target.value },
                   })
                 }
-                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               />
             </div>
             <div className="mb-3">
-              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">时间</label>
+              <label className="mb-1 block text-sm text-600">时间</label>
               <input
                 type="time"
                 value={dateValue.time ?? "00:00"}
@@ -465,7 +465,7 @@ function ConditionDialog({
                     value: { ...dateValue, time: e.target.value },
                   })
                 }
-                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               />
             </div>
           </>
@@ -474,11 +474,11 @@ function ConditionDialog({
         {isNumber && (
           <>
             <div className="mb-2">
-              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">操作符</label>
+              <label className="mb-1 block text-sm text-600">操作符</label>
               <select
                 value={condition.operator}
                 onChange={(e) => onUpdate({ operator: e.target.value })}
-                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 {getOperatorsForType("number").map((op) => (
                   <option key={op} value={op}>{op}</option>
@@ -486,7 +486,7 @@ function ConditionDialog({
               </select>
             </div>
             <div className="mb-3">
-              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">值</label>
+              <label className="mb-1 block text-sm text-600">值</label>
               <input
                 type="number"
                 value={condition.value ?? ""}
@@ -495,7 +495,7 @@ function ConditionDialog({
                     value: e.target.value === "" ? undefined : Number(e.target.value),
                   })
                 }
-                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               />
             </div>
           </>
@@ -504,11 +504,11 @@ function ConditionDialog({
         {isText && (
           <>
             <div className="mb-2">
-              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">操作符</label>
+              <label className="mb-1 block text-sm text-600">操作符</label>
               <select
                 value={condition.operator}
                 onChange={(e) => onUpdate({ operator: e.target.value })}
-                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 {(fieldMeta.operators ?? getOperatorsForType("text")).map((op) => (
                   <option key={op} value={op}>{op}</option>
@@ -516,12 +516,12 @@ function ConditionDialog({
               </select>
             </div>
             <div className="mb-3">
-              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">值</label>
+              <label className="mb-1 block text-sm text-600">值</label>
               <input
                 type="text"
                 value={condition.value ?? ""}
                 onChange={(e) => onUpdate({ value: e.target.value || undefined })}
-                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               />
             </div>
           </>
@@ -530,11 +530,11 @@ function ConditionDialog({
         {isSelect && (
           <>
             <div className="mb-2">
-              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">操作符</label>
+              <label className="mb-1 block text-sm text-600">操作符</label>
               <select
                 value={condition.operator}
                 onChange={(e) => onUpdate({ operator: e.target.value })}
-                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 {(fieldMeta.operators ?? ["="]).map((op) => (
                   <option key={op} value={op}>{op}</option>
@@ -542,11 +542,11 @@ function ConditionDialog({
               </select>
             </div>
             <div className="mb-3">
-              <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">值</label>
+              <label className="mb-1 block text-sm text-600">值</label>
               <select
                 value={condition.value ?? ""}
                 onChange={(e) => onUpdate({ value: e.target.value === "" ? undefined : e.target.value })}
-                className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+                className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 <option value="">请选择</option>
                 {fieldMeta.options?.map((opt) => (
@@ -559,7 +559,7 @@ function ConditionDialog({
 
         {isBoolean && (
           <div className="mb-3">
-            <label className="mb-1 block text-figma-paragraph text-figma-text-secondary">值</label>
+            <label className="mb-1 block text-sm text-600">值</label>
             <select
               value={condition.value === undefined ? "" : String(condition.value)}
               onChange={(e) =>
@@ -567,7 +567,7 @@ function ConditionDialog({
                   value: e.target.value === "" ? undefined : e.target.value === "true",
                 })
               }
-              className="w-full rounded-figma-btn border border-figma-border bg-figma-surface px-3 py-2 text-figma-paragraph text-figma-text-primary outline-none focus:border-figma-primary"
+              className="w-full rounded-btn border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
             >
               <option value="">全部</option>
               <option value="true">是</option>
@@ -580,7 +580,7 @@ function ConditionDialog({
           <button
             type="button"
             onClick={onApply}
-            className="rounded-figma-btn bg-figma-primary px-4 py-2 text-figma-paragraph font-medium text-white hover:opacity-90"
+            className="rounded-btn bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             应用
           </button>

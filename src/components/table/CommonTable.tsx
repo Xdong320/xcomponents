@@ -505,19 +505,19 @@ export function CommonTable<T extends Record<string, any> = any>({
 
   const rowSizeClass =
     size === "small"
-      ? "py-1.5 px-3 text-figma-paragraph"
+      ? "py-1.5 px-3 text-sm"
       : size === "large"
-        ? "py-4 px-5 text-figma-paragraph"
-        : "py-2 px-3 text-figma-paragraph";
+        ? "py-4 px-5 text-sm"
+        : "py-2 px-3 text-sm";
   const cellSizeClass =
     size === "small"
       ? "py-2 px-3"
       : size === "large"
         ? "py-4 px-5"
         : "py-3 pl-3 pr-5";
-  const tableLayout = bordered ? "border border-figma-border" : "";
-  const borderR = bordered ? "border-r border-figma-border" : "";
-  const borderB = "border-b border-figma-border";
+  const tableLayout = bordered ? "border border-200" : "";
+  const borderR = bordered ? "border-r border-200" : "";
+  const borderB = "border-b border-200";
 
   return (
     <div className="flex flex-col ">
@@ -525,9 +525,7 @@ export function CommonTable<T extends Record<string, any> = any>({
       <div className="flex py-4 items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {title && (
-            <h2 className="text-figma-label-md text-figma-text-secondary">
-              {title}
-            </h2>
+            <div className="text-sm font-normal text-gray-600">{title}</div>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -537,9 +535,9 @@ export function CommonTable<T extends Record<string, any> = any>({
               placeholder={searchPlaceholder}
               value={searchValue ?? ""}
               onChange={(e) => onSearchChange?.(e.target.value)}
-              className="h-9 w-60 rounded-figma-btn border border-figma-border bg-figma-surface pl-9 pr-3 text-figma-paragraph text-figma-text-primary outline-none placeholder:text-figma-text-secondary focus:border-figma-primary"
+              className="h-9 w-60 rounded-btn border border-200 bg-0 pl-9 pr-3 text-sm text-950 outline-none placeholder:text-600 focus:border-primary"
             />
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-figma-text-secondary">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-600">
               🔍
             </span>
           </div> */}
@@ -548,7 +546,7 @@ export function CommonTable<T extends Record<string, any> = any>({
               <button
                 type="button"
                 onClick={() => setColumnSettingsOpen((v) => !v)}
-                className="flex items-center gap-1 rounded-figma-btn border border-figma-border bg-figma-surface px-2.5 py-2 text-figma-label-sm text-figma-text-secondary hover:bg-figma-surface-alt"
+                className="flex items-center gap-1 rounded-btn border border-200 bg-0 px-2.5 py-2 text-sm font-medium text-600 hover:bg-100"
               >
                 <span>列设置</span>
               </button>
@@ -581,7 +579,7 @@ export function CommonTable<T extends Record<string, any> = any>({
       <div
         ref={scrollContainerRef}
         onScroll={hasScroll ? handleScroll : undefined}
-        className={`table-scroll-area min-w-0 w-full bg-figma-surface shadow-figma-small ${bordered ? "border border-figma-border" : ""} ${scrollY != null ? "overflow-y-auto overflow-x-auto min-h-0" : "overflow-x-auto"}`}
+        className={`table-scroll-area min-w-0 w-full bg-0 shadow-small ${bordered ? "border border-200" : ""} ${scrollY != null ? "overflow-y-auto overflow-x-auto min-h-0" : "overflow-x-auto"}`}
         style={
           scrollY != null
             ? {
@@ -605,7 +603,7 @@ export function CommonTable<T extends Record<string, any> = any>({
         >
           <thead>
             <tr
-              className={`rounded-t-figma-table bg-figma-surface-alt transition-shadow duration-200 ease-out ${scrollY != null ? "sticky top-0 z-[2]" : ""}`}
+              className={`rounded-t-table bg-100 transition-shadow duration-200 ease-out ${scrollY != null ? "sticky top-0 z-[2]" : ""}`}
               style={
                 showHeaderShadow
                   ? { boxShadow: "0 2px 8px -2px rgba(0,0,0,0.08)" }
@@ -614,7 +612,7 @@ export function CommonTable<T extends Record<string, any> = any>({
             >
               {rowSelectionProp && rowSelectionProp.type !== "radio" && (
                 <th
-                  className={`${borderR} ${borderB} ${rowSizeClass} text-left text-figma-paragraph text-figma-text-secondary ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[2] bg-figma-surface-alt" : ""}`}
+                  className={`${borderR} ${borderB} ${rowSizeClass} text-left text-sm text-600 ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[2] bg-100" : ""}`}
                   style={{
                     width: SELECTION_COL_WIDTH,
                     minWidth: SELECTION_COL_WIDTH,
@@ -648,13 +646,13 @@ export function CommonTable<T extends Record<string, any> = any>({
                       )
                     }
                     onChange={(e) => toggleAllRowsOnPage(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-figma-border text-figma-primary"
+                    className="h-3.5 w-3.5 rounded border-200 text-primary"
                   />
                 </th>
               )}
               {rowSelectionProp && rowSelectionProp.type === "radio" && (
                 <th
-                  className={`${borderR} ${borderB} ${rowSizeClass} text-left text-figma-paragraph text-figma-text-secondary ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[2] bg-figma-surface-alt" : ""}`}
+                  className={`${borderR} ${borderB} ${rowSizeClass} text-left text-sm text-600 ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[2] bg-100" : ""}`}
                   style={{
                     width: SELECTION_COL_WIDTH,
                     minWidth: SELECTION_COL_WIDTH,
@@ -699,7 +697,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                 return (
                   <th
                     key={key.toString()}
-                    className={`${borderR} ${borderB} ${rowSizeClass} text-left text-figma-paragraph text-figma-text-secondary ${bordered ? "last:border-r-0" : ""} ${isFixedLeft || isFixedRight ? "sticky z-[2] bg-figma-surface-alt" : ""}`}
+                    className={`${borderR} ${borderB} ${rowSizeClass} text-left text-sm text-600 ${bordered ? "last:border-r-0" : ""} ${isFixedLeft || isFixedRight ? "sticky z-[2] bg-100" : ""}`}
                     style={{
                       ...(col.width
                         ? { width: col.width, minWidth: col.width }
@@ -752,7 +750,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                               next,
                             );
                           }}
-                          className="rounded p-0.5 text-figma-text-secondary hover:bg-figma-surface-alt hover:text-figma-text-primary"
+                          className="rounded p-0.5 text-600 hover:bg-100 hover:text-950"
                           title="排序"
                         >
                           {currentOrder === "ascend"
@@ -771,7 +769,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                                 filterOpen ? null : String(key),
                               )
                             }
-                            className="rounded p-0.5 text-figma-text-secondary hover:bg-figma-surface-alt hover:text-figma-text-primary"
+                            className="rounded p-0.5 text-600 hover:bg-100 hover:text-950"
                             title="筛选"
                           >
                             ◆
@@ -783,7 +781,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                                 aria-hidden
                                 onClick={() => setFilterDropdownOpen(null)}
                               />
-                              <div className="absolute left-0 top-full z-20 mt-1 w-40 rounded-figma-table border border-figma-border bg-figma-surface p-2 shadow-figma-small transition-opacity duration-150">
+                              <div className="absolute left-0 top-full z-20 mt-1 w-40 rounded-table border border-200 bg-0 p-2 shadow-small transition-opacity duration-150">
                                 {(col.filters || []).map((f) => {
                                   const selected = (
                                     filters[key] ?? []
@@ -791,7 +789,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                                   return (
                                     <label
                                       key={String(f.value)}
-                                      className="flex cursor-pointer items-center gap-2 py-1 text-figma-paragraph text-figma-text-primary"
+                                      className="flex cursor-pointer items-center gap-2 py-1 text-sm text-950"
                                     >
                                       <input
                                         type="checkbox"
@@ -817,7 +815,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                                 <button
                                   type="button"
                                   onClick={() => handleFilterChange(key, null)}
-                                  className="mt-1 w-full rounded-figma-tag border border-figma-border px-2 py-1 text-figma-paragraph text-figma-text-secondary hover:bg-figma-surface-alt"
+                                  className="mt-1 w-full rounded-tag border border-200 px-2 py-1 text-sm text-600 hover:bg-100"
                                 >
                                   重置
                                 </button>
@@ -837,7 +835,7 @@ export function CommonTable<T extends Record<string, any> = any>({
               <tr>
                 <td
                   colSpan={visibleColumns.length + (rowSelectionProp ? 1 : 0)}
-                  className={`${borderB} py-8 text-center text-figma-paragraph text-figma-text-secondary`}
+                  className={`${borderB} py-8 text-center text-sm text-600`}
                 >
                   {loadingText}
                 </td>
@@ -846,7 +844,7 @@ export function CommonTable<T extends Record<string, any> = any>({
               <tr>
                 <td
                   colSpan={visibleColumns.length + (rowSelectionProp ? 1 : 0)}
-                  className={`${borderB} py-8 text-center text-figma-paragraph text-figma-text-secondary`}
+                  className={`${borderB} py-8 text-center text-sm text-600`}
                 >
                   {emptyText}
                 </td>
@@ -860,11 +858,11 @@ export function CommonTable<T extends Record<string, any> = any>({
                 return (
                   <tr
                     key={rowKeySafe.toString()}
-                    className={`group cursor-pointer bg-figma-surface-alt ${selected ? "bg-figma-primary/5" : ""}`}
+                    className={`group cursor-pointer bg-100 ${selected ? "bg-primary/10" : ""}`}
                   >
                     {rowSelectionProp && rowSelectionProp.type !== "radio" && (
                       <td
-                        className={`${borderR} ${borderB} bg-figma-surface px-3 py-3 group-hover:bg-gray-50 ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[1] bg-figma-surface" : ""}`}
+                        className={`${borderR} ${borderB} bg-0 px-3 py-3 group-hover:bg-50 ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[1] bg-0" : ""}`}
                         style={{
                           transition:
                             hasHorizontalOverflow && columnLayout[0]?.fixed
@@ -895,13 +893,13 @@ export function CommonTable<T extends Record<string, any> = any>({
                           onChange={(e) =>
                             toggleRowSelection(record, e.target.checked)
                           }
-                          className="h-3.5 w-3.5 rounded border-figma-border text-figma-primary"
+                          className="h-3.5 w-3.5 rounded border-200 text-primary"
                         />
                       </td>
                     )}
                     {rowSelectionProp && rowSelectionProp.type === "radio" && (
                       <td
-                        className={`${borderR} ${borderB} bg-figma-surface px-3 py-3 group-hover:bg-gray-50 ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[1] bg-figma-surface" : ""}`}
+                        className={`${borderR} ${borderB} bg-0 px-3 py-3 group-hover:bg-50 ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[1] bg-0" : ""}`}
                         style={{
                           transition:
                             hasHorizontalOverflow && columnLayout[0]?.fixed
@@ -936,7 +934,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                               rowSelectionProp.onChange?.([key], [record]);
                             }
                           }}
-                          className="h-3.5 w-3.5 border-figma-border text-figma-primary"
+                          className="h-3.5 w-3.5 border-200 text-primary"
                         />
                       </td>
                     )}
@@ -958,7 +956,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                       return (
                         <td
                           key={colKey.toString()}
-                          className={`${borderR} ${borderB} bg-figma-surface ${cellSizeClass} text-figma-paragraph text-figma-text-primary group-hover:bg-gray-50 ${bordered ? "last:border-r-0" : ""} ${isFixedLeft || isFixedRight ? "sticky z-[1] bg-figma-surface" : ""}`}
+                          className={`${borderR} ${borderB} bg-0 ${cellSizeClass} text-sm text-950 group-hover:bg-50 ${bordered ? "last:border-r-0" : ""} ${isFixedLeft || isFixedRight ? "sticky z-[1] bg-0" : ""}`}
                           style={{
                             ...(col.align ? { textAlign: col.align } : {}),
                             transition:

@@ -2,25 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 主题变量（与 tailwind.config 对应，供非 Tailwind 或 CSS 使用） */
+:root {
+  --primary-color: #7f58ea;
+  --primary-color-400: #b39feb;
+  --primary-color-50: #e8e7fa;
+  --success-color: #52c41a;
+  --warning-color: #faad14;
+  --error-color: #ff4d4f;
+  --info-color: #7f58ea;
+  --dc-color-0: #fff;
+  --dc-color-50: #f5f7fa;
+  --dc-color-100: #eff3f7;
+  --dc-color-200: #e2e8f0;
+  --dc-color-400: #90a1b9;
+  --dc-color-600: #45556c;
+  --dc-color-950: #0f172b;
+  --dc-color-sub-600: #525866;
+  --dc-color-stroke-200: #e2e8f0;
+  --dc-color-icon-300: #d3dbe6;
+}
+
 @layer base {
   html {
+    height: 100%;
     overflow-x: hidden;
   }
   body {
-    @apply font-sans text-figma-text-primary;
+    @apply font-sans text-950;
+    margin: 0;
+    padding: 0;
     font-size: 14px;
-    font-weight: 400;
     line-height: 1.43;
     letter-spacing: 0.04em;
     overflow-x: hidden;
+    height: 100%;
+    font-family: 'Noto Sans SC', sans-serif;
+  }
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
   }
 }
 
-/* 表格滚动区域：美观滚动条，固定列与主体垂直滚动同步（不设 scrollbar-gutter 以免撑出页面横向滚动条） */
+/* 表格滚动区域：美观滚动条（使用主题色） */
 @layer components {
   .table-scroll-area {
     scrollbar-width: thin;
-    scrollbar-color: #e2e8f0 transparent;
+    scrollbar-color: var(--dc-color-200) transparent;
   }
   .table-scroll-area::-webkit-scrollbar {
     width: 8px;
@@ -30,13 +59,27 @@
     background: transparent;
   }
   .table-scroll-area::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
+    background: var(--dc-color-200);
     border-radius: 4px;
   }
   .table-scroll-area::-webkit-scrollbar-thumb:hover {
-    background: #cbd5e1;
+    background: var(--dc-color-400);
   }
   .table-scroll-area::-webkit-scrollbar-corner {
     background: transparent;
   }
+}
+
+/* 美化滚动条（全局） */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(208, 208, 208, 0.3);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 2px;
 }
