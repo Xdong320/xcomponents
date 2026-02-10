@@ -346,7 +346,7 @@ export function DatePicker(props: DatePickerProps) {
       className={`flex flex-row w-fit rounded-2xl shadow-md overflow-hidden ${className ?? ""}`.trim()}
     >
       {/* Time Filter - 左侧快捷周期：仅选中项有 bg-50；默认自定义，过去N天可输入 N */}
-      <div className="flex flex-col gap-2 py-5 px-4 pt-5 pb-0.5 w-[200px] min-h-[364px] bg-white border-r border-slate-200">
+      <div className="flex flex-col gap-2 py-5 px-4 pt-5 pb-0.5 w-60 min-h-[364px] bg-white border-r border-slate-200">
         {PRESETS.map(({ key, label }) => {
           if (key === "lastN") {
             const isActive = activePreset === "lastN";
@@ -369,7 +369,7 @@ export function DatePicker(props: DatePickerProps) {
                     handlePastNApply(Number.isInteger(n) && n > 0 ? n : 1);
                   }
                 }}
-                className={`flex items-center gap-1.5 py-2 pl-3 pr-2 w-[168px] rounded-xl cursor-pointer ${
+                className={`flex items-center gap-1.5 py-2 pl-3 pr-2 w-45 rounded-lg cursor-pointer ${
                   isActive ? "bg-50" : ""
                 }`}
               >
@@ -429,7 +429,7 @@ export function DatePicker(props: DatePickerProps) {
                     );
                   }
                 }}
-                className={`flex items-center gap-1.5 py-2 pl-3 pr-2 w-[168px] rounded-xl cursor-pointer ${
+                className={`flex items-center gap-1.5 py-2 pl-3 pr-2 w-45 rounded-lg cursor-pointer ${
                   isActive ? "bg-50" : ""
                 }`}
               >
@@ -471,7 +471,7 @@ export function DatePicker(props: DatePickerProps) {
               key={key}
               type="button"
               onClick={() => handlePreset(key)}
-              className={`flex items-center gap-2 py-2 pl-3 pr-2 w-[168px] border-0 cursor-pointer font-medium text-sm text-slate-900 rounded-xl ${
+              className={`flex items-center gap-2 py-2 pl-3 pr-2 w-45 border-0 cursor-pointer font-medium text-sm text-slate-900 rounded-lg ${
                 activePreset === key ? "bg-50" : ""
               }`}
             >
