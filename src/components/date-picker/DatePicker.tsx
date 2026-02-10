@@ -558,7 +558,7 @@ export function DatePicker(props: DatePickerProps) {
             <ArrowRight />
           </button>
           {yearPickerOpen && (
-            <div className="absolute left-1/2 top-full mt-1 -translate-x-1/2 z-10 w-48 max-h-56 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
+            <div className="absolute left-1/2 top-full mt-1 -translate-x-1/2 z-20 w-48 max-h-56 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
               <div className="year-picker-scroll max-h-56 overflow-y-auto pb-2 px-2">
                 <div className="sticky top-0 z-10 text-xs text-slate-400 px-2 py-1 bg-white">
                   选择年份
