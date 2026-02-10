@@ -30,12 +30,6 @@ export default {
         'stroke-200': '#e2e8f0',
         'icon-300': '#d3dbe6',
       },
-      borderRadius: {
-        zxl: '12px',
-      },
-      boxShadow: {
-        'small': '0px 2px 4px 0px rgba(0, 0, 0, 0.08)',
-      },
     },
   },
   plugins: [],

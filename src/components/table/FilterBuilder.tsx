@@ -432,7 +432,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
               value={saveName}
               onChange={(e) => setSaveName(e.target.value)}
               placeholder="例：会话时长80-120s"
-              className="mb-4 w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none placeholder:text-600 focus:border-primary"
+              className="mb-4 w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none placeholder:text-600 focus:border-primary"
             />
             <div className="flex justify-end gap-2">
               <button
@@ -441,7 +441,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                   setSaveModalOpen(false);
                   setSaveName("");
                 }}
-                className="rounded-zxl border border-200 px-3 py-1.5 text-sm text-600 hover:bg-100"
+                className="rounded-xl border border-200 px-3 py-1.5 text-sm text-600 hover:bg-100"
               >
                 取消
               </button>
@@ -449,7 +449,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                 type="button"
                 onClick={handleSavePreset}
                 disabled={!saveName.trim()}
-                className="rounded-zxl bg-primary px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+                className="rounded-xl bg-primary px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
               >
                 保存
               </button>
@@ -545,7 +545,7 @@ function ConditionDialog({
                     },
                   })
                 }
-                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 <option value="before">before</option>
                 <option value="after">after</option>
@@ -563,7 +563,7 @@ function ConditionDialog({
                     value: { ...dateValue, date: e.target.value },
                   })
                 }
-                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               />
             </div>
             <div className="mb-3">
@@ -576,7 +576,7 @@ function ConditionDialog({
                     value: { ...dateValue, time: e.target.value },
                   })
                 }
-                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               />
             </div>
           </>
@@ -589,7 +589,7 @@ function ConditionDialog({
               <select
                 value={condition.operator}
                 onChange={(e) => onUpdate({ operator: e.target.value })}
-                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 {getOperatorsForType("number").map((op) => (
                   <option key={op} value={op}>
@@ -611,7 +611,7 @@ function ConditionDialog({
                         : Number(e.target.value),
                   })
                 }
-                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               />
             </div>
           </>
@@ -624,7 +624,7 @@ function ConditionDialog({
               <select
                 value={condition.operator}
                 onChange={(e) => onUpdate({ operator: e.target.value })}
-                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 {(fieldMeta.operators ?? getOperatorsForType("text")).map(
                   (op) => (
@@ -643,7 +643,7 @@ function ConditionDialog({
                 onChange={(e) =>
                   onUpdate({ value: e.target.value || undefined })
                 }
-                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               />
             </div>
           </>
@@ -656,7 +656,7 @@ function ConditionDialog({
               <select
                 value={condition.operator}
                 onChange={(e) => onUpdate({ operator: e.target.value })}
-                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 {(fieldMeta.operators ?? ["="]).map((op) => (
                   <option key={op} value={op}>
@@ -674,7 +674,7 @@ function ConditionDialog({
                     value: e.target.value === "" ? undefined : e.target.value,
                   })
                 }
-                className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
               >
                 <option value="">请选择</option>
                 {fieldMeta.options?.map((opt) => (
@@ -702,7 +702,7 @@ function ConditionDialog({
                       : e.target.value === "true",
                 })
               }
-              className="w-full rounded-zxl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
+              className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
             >
               <option value="">全部</option>
               <option value="true">是</option>
@@ -715,7 +715,7 @@ function ConditionDialog({
           <button
             type="button"
             onClick={onApply}
-            className="rounded-zxl bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             应用
           </button>
