@@ -391,7 +391,7 @@ export function TableDemo() {
               onChange: setVisibleKeys,
             }}
             // 可选：表头/列固定与滚动区域
-            scroll={{ y: 500, x: 1200 }}
+            scroll={{ y: 600, x: 1200 }}
             // 可选：文案本地化（空态、加载中文案），默认内部文案
             // locale={{ emptyText: "暂无数据", loadingText: "加载中..." }}
             // 可选：分页 / 筛选 / 排序变化回调

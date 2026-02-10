@@ -8,8 +8,8 @@ const root = document.getElementById("root");
 if (root) {
   createRoot(root).render(
     <React.StrictMode>
-      {/* <TableDemo /> */}
-      <DatePickerDemo />
+      <TableDemo />
+      {/* <DatePickerDemo /> */}
     </React.StrictMode>,
   );
 }

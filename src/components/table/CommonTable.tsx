@@ -604,7 +604,7 @@ export function CommonTable<T extends Record<string, any> = any>({
         }
       >
         <table
-          className={`-mt-1 -mb-1 border-separate border-spacing-x-0 border-spacing-y-1 ${tableLayout} ${hasScrollX ? "table-fixed" : "w-full"}`}
+          className={`${scrollY != null ? "" : "-mt-1 -mb-1"} border-separate border-spacing-x-0 border-spacing-y-1 ${tableLayout} ${hasScrollX ? "table-fixed" : "w-full"}`}
           style={
             hasScrollX && scrollXNum > 0
               ? {
