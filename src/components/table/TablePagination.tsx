@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { PaginationRenderProps } from "./types";
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
@@ -97,6 +97,21 @@ export function TablePagination({
     [current, totalPages],
   );
 
+  const [pageSizeOpen, setPageSizeOpen] = useState(false);
+  const pageSizeRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!pageSizeOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (!pageSizeRef.current) return;
+      if (!pageSizeRef.current.contains(e.target as Node)) {
+        setPageSizeOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [pageSizeOpen]);
+
   if (typeof customRender === "function") {
     return (
       <>
@@ -155,20 +170,63 @@ export function TablePagination({
           <ArrowRightIcon />
         </button>
       </div>
-      <div className="flex flex-1 items-center justify-end">
-        <select
-          value={pageSize}
-          onChange={(e) => {
-            onChange(1, Number(e.target.value));
-          }}
-          className="cursor-pointer appearance-auto rounded-lg border border-200 bg-0 py-1.5 pl-2.5 pr-1.5 text-sm text-sub-600 shadow-lg outline-none"
+      <div
+        className="relative flex flex-1 items-center justify-end"
+        ref={pageSizeRef}
+      >
+        <button
+          type="button"
+          className="inline-flex h-8 items-center rounded-lg border border-200 bg-0 px-3 text-sm font-medium text-600 transition-colors hover:bg-100"
+          onClick={() => setPageSizeOpen((v) => !v)}
         >
-          {pageSizeOptions.map((n) => (
-            <option key={n} value={n}>
-              {n}条 / 页
-            </option>
-          ))}
-        </select>
+          <span>{pageSize}条 / 页</span>
+          <svg
+            className="ml-1 h-3 w-3 text-600"
+            viewBox="0 0 10 6"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M1 1L5 5L9 1"
+              stroke="currentColor"
+              strokeWidth="1.2"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+        {pageSizeOpen && (
+          <>
+            <div className="fixed inset-0 z-10" aria-hidden />
+            <div className="absolute right-0 bottom-full z-20 mb-2 w-32 rounded-xl border border-200 bg-0 p-1 shadow-lg">
+              {pageSizeOptions.map((n) => {
+                const active = n === pageSize;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 mt-1 text-left text-sm ${
+                      active
+                        ? "bg-100 text-950"
+                        : "text-600 hover:bg-50 hover:text-950"
+                    }`}
+                    onClick={() => {
+                      setPageSizeOpen(false);
+                      if (n !== pageSize) {
+                        onChange(1, n);
+                      }
+                    }}
+                  >
+                    <span>{n}条 / 页</span>
+                    {/* {active && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    )} */}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
