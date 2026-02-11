@@ -330,8 +330,8 @@ export function TableDemo() {
   }, []);
 
   return (
-    <div className="min-h-screen min-w-0 overflow-x-hidden bg-white p-6 font-sans">
-      <div className="mx-auto min-w-0 max-w-[1320px]">
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-white font-sans">
+      <div className="mx-auto min-w-0 max-w-[1320px] p-6">
         <h1 className="mb-4 text-base font-medium tracking-normal text-950">
           会话洞察 · 会话列表
         </h1>
@@ -394,6 +394,10 @@ export function TableDemo() {
             scroll={{ y: 600, x: 1200 }}
             // 可选：文案本地化（空态、加载中文案），默认内部文案
             // locale={{ emptyText: "暂无数据", loadingText: "加载中..." }}
+            // 可选：点击行回调（例如打开详情侧边栏）
+            onRowClick={(record, index) => {
+              console.log("点击行", { record, index });
+            }}
             // 可选：分页 / 筛选 / 排序变化回调
             onChange={handleTableChange}
           />

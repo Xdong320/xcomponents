@@ -60,6 +60,7 @@ const columns: CommonColumnType<Record>[] = [
 | `columnSettingsProps` | `Partial<ColumnSettingsProps<T>>` | 列设置配置 |
 | `scroll` | `{ x?: number \| string; y?: number \| string }` | 表头/列固定：`y` 可视高度，`x` 横向滚动宽度 |
 | `locale` | `TableLocale` | `emptyText` / `loadingText` |
+| `onRowClick` | `(record: T, index: number) => void` | 行点击回调（可选），`index` 为当前页中的行索引；点击行内按钮/复选框等交互元素不会触发行点击 |
 | `onChange` | `(pagination, filters, sorter, extra) => void` | 分页/筛选/排序变化回调 |
 
 ### 列配置 CommonColumnType

@@ -152,6 +152,8 @@ export interface CommonTableProps<T = any> {
   scroll?: { x?: number | string; y?: number | string };
   /** 文案：空数据、加载中（边界情况：空数据时单行 colSpan 横跨全列，无固定列样式） */
   locale?: TableLocale;
+  /** 行点击回调（可选），参数为当前行数据和在当前页中的行索引 */
+  onRowClick?: (record: T, index: number) => void;
   onChange?: (
     pagination: CommonTableOnChangePagination,
     filters: TableFilters,

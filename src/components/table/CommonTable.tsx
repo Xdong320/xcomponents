@@ -62,6 +62,7 @@ export function CommonTable<T extends Record<string, any> = any>({
   columnSettingsProps,
   scroll: scrollProp,
   locale: localeProp,
+  onRowClick,
   onChange,
 }: CommonTableProps<T>) {
   // ---------- 文案与行 key ----------
@@ -912,6 +913,28 @@ export function CommonTable<T extends Record<string, any> = any>({
                   <tr
                     key={rowKeySafe.toString()}
                     className={`group cursor-pointer bg-100 ${selected ? "bg-primary/10" : ""}`}
+                    onClick={
+                      onRowClick
+                        ? (e) => {
+                            const target = e.target as HTMLElement;
+                            // 行内按钮/复选框/链接点击不触发行点击
+                            if (target.closest("button, input, a")) return;
+                            onRowClick(record, index);
+                          }
+                        : undefined
+                    }
+                    role={onRowClick ? "button" : undefined}
+                    tabIndex={onRowClick ? 0 : undefined}
+                    onKeyDown={
+                      onRowClick
+                        ? (e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              onRowClick(record, index);
+                            }
+                          }
+                        : undefined
+                    }
                   >
                     {rowSelectionProp && rowSelectionProp.type !== "radio" && (
                       <td
