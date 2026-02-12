@@ -164,34 +164,60 @@ export function CommonTable<T extends Record<string, any> = any>({
     });
   }, [scrollY, scrollX, hasScroll]);
 
-  // 内部滚动时，阻止滚轮事件冒泡到页面，避免联动外层滚动条
-  const handleWheel: React.WheelEventHandler<HTMLDivElement> = useCallback(
-    (e) => {
-      if (!hasScrollY) return;
-      const el = scrollContainerRef.current;
-      if (!el) return;
+  // 当页面和表格都存在滚动条时，鼠标在表格内只滚动表格内容（用 passive: false 的 native 监听使 preventDefault 生效）
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el || (!hasScrollY && !hasScrollX)) return;
+
+    const onWheel = (e: WheelEvent) => {
+      const hasVScroll = el.scrollHeight > el.clientHeight;
+      const hasHScroll = el.scrollWidth > el.clientWidth;
+      if (!hasVScroll && !hasHScroll) return;
 
       const deltaY = e.deltaY;
-      if (deltaY === 0) return;
+      const deltaX = e.deltaX;
+      if (deltaY === 0 && deltaX === 0) return;
 
-      const { scrollTop, scrollHeight, clientHeight } = el;
-      const atTop = scrollTop <= 0;
-      const atBottom = scrollTop + clientHeight >= scrollHeight;
-
-      // 阻止事件继续作用在外层滚动容器
-      e.preventDefault();
-      e.stopPropagation();
-
-      // 在内部手动滚动，保证体验一致
-      if ((deltaY < 0 && atTop) || (deltaY > 0 && atBottom)) {
-        // 已到边界时，轻微抵消多余滚动，避免“穿透”到外层
-        el.scrollTop += deltaY;
-      } else {
-        el.scrollTop += deltaY;
+      let shouldPrevent = false;
+      if (deltaY !== 0 && hasVScroll) {
+        const { scrollTop, scrollHeight, clientHeight } = el;
+        const atTop = scrollTop <= 0;
+        const atBottom = scrollTop + clientHeight >= scrollHeight;
+        if (deltaY < 0 && atTop) {
+          shouldPrevent = true;
+          el.scrollTop = 0;
+        } else if (deltaY > 0 && atBottom) {
+          shouldPrevent = true;
+          el.scrollTop = scrollHeight - clientHeight;
+        } else {
+          shouldPrevent = true;
+          el.scrollTop += deltaY;
+        }
       }
-    },
-    [hasScrollY],
-  );
+      if (deltaX !== 0 && hasHScroll) {
+        const { scrollLeft, scrollWidth, clientWidth } = el;
+        const atLeft = scrollLeft <= 0;
+        const atRight = scrollLeft + clientWidth >= scrollWidth;
+        if (deltaX < 0 && atLeft) {
+          shouldPrevent = true;
+          el.scrollLeft = 0;
+        } else if (deltaX > 0 && atRight) {
+          shouldPrevent = true;
+          el.scrollLeft = scrollWidth - clientWidth;
+        } else {
+          shouldPrevent = true;
+          el.scrollLeft += deltaX;
+        }
+      }
+      if (shouldPrevent) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [hasScrollY, hasScrollX]);
 
   useEffect(() => {
     if (!hasScroll) return;
@@ -623,7 +649,6 @@ export function CommonTable<T extends Record<string, any> = any>({
       <div
         ref={scrollContainerRef}
         onScroll={hasScroll ? handleScroll : undefined}
-        onWheel={hasScrollY ? handleWheel : undefined}
         className={`table-scroll-area min-w-0 w-full bg-0 ${bordered ? "border border-200" : ""} ${
           hasScrollY && hasScrollX
             ? "overflow-y-auto overflow-x-auto min-h-0"
@@ -644,7 +669,11 @@ export function CommonTable<T extends Record<string, any> = any>({
         }
       >
         <table
-          className={`${scrollY != null ? "" : "-mt-1 -mb-1"} border-separate border-spacing-x-0 border-spacing-y-1 ${tableLayout} ${hasScrollX ? "table-fixed" : "w-full"}`}
+          className={`${"-mt-1 -mb-1"} ${
+            bordered
+              ? "border-collapse"
+              : "border-separate border-spacing-x-0 border-spacing-y-1"
+          } ${tableLayout} ${hasScrollX ? "table-fixed" : "w-full"}`}
           style={
             hasScrollX && scrollXNum > 0
               ? {
@@ -657,12 +686,7 @@ export function CommonTable<T extends Record<string, any> = any>({
           {/* ---------- 表头：选择列 + 数据列（排序图标、筛选下拉）（改表头/排序/筛选 UI 改这里） ---------- */}
           <thead>
             <tr
-              className={`rounded-t-xl bg-100 transition-shadow duration-200 ease-out ${scrollY != null ? "sticky top-0 z-[2]" : ""}`}
-              style={
-                showHeaderShadow
-                  ? { boxShadow: "0 2px 8px -2px rgba(0,0,0,0.08)" }
-                  : undefined
-              }
+              className={`rounded-t-xl bg-100 ${scrollY != null ? "sticky top-0 z-[2]" : ""}`}
             >
               {rowSelectionProp && rowSelectionProp.type !== "radio" && (
                 <th
