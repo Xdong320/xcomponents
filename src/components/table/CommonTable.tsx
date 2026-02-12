@@ -149,20 +149,44 @@ export function CommonTable<T extends Record<string, any> = any>({
     scrollWidth: 0,
     clientWidth: 0,
   });
+  const [hoveredRowKey, setHoveredRowKey] = useState<Key | null>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollingTimerRef = useRef<number | null>(null);
+  const lastMouseRef = useRef({ x: 0, y: 0 });
 
   const hasScroll = hasScrollY || hasScrollX;
+
+  const markScrolling = useCallback(() => {
+    setIsScrolling(true);
+    if (scrollingTimerRef.current != null) {
+      window.clearTimeout(scrollingTimerRef.current);
+    }
+    scrollingTimerRef.current = window.setTimeout(() => {
+      setIsScrolling(false);
+      scrollingTimerRef.current = null;
+      // 滚动结束后，根据当前鼠标位置设置 hover 到所在行
+      const { x, y } = lastMouseRef.current;
+      const el = document.elementFromPoint(x, y);
+      const tr = el?.closest("tr");
+      const rowKey = tr?.getAttribute("data-row-key");
+      if (rowKey != null) {
+        setHoveredRowKey(rowKey);
+      }
+    }, 150);
+  }, []);
 
   const handleScroll = useCallback(() => {
     if (!hasScroll) return;
     const el = scrollContainerRef.current;
     if (!el) return;
+    markScrolling();
     setScrollPos({
       scrollLeft: el.scrollLeft,
       scrollTop: el.scrollTop,
       scrollWidth: el.scrollWidth,
       clientWidth: el.clientWidth,
     });
-  }, [scrollY, scrollX, hasScroll]);
+  }, [hasScroll, markScrolling]);
 
   // 当页面和表格都存在滚动条时，鼠标在表格内只滚动表格内容（用 passive: false 的 native 监听使 preventDefault 生效）
   useEffect(() => {
@@ -212,12 +236,13 @@ export function CommonTable<T extends Record<string, any> = any>({
       if (shouldPrevent) {
         e.preventDefault();
         e.stopPropagation();
+        markScrolling();
       }
     };
 
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [hasScrollY, hasScrollX]);
+  }, [hasScrollY, hasScrollX, markScrolling]);
 
   useEffect(() => {
     if (!hasScroll) return;
@@ -649,6 +674,9 @@ export function CommonTable<T extends Record<string, any> = any>({
       <div
         ref={scrollContainerRef}
         onScroll={hasScroll ? handleScroll : undefined}
+        onMouseMove={(e) => {
+          lastMouseRef.current = { x: e.clientX, y: e.clientY };
+        }}
         className={`table-scroll-area min-w-0 w-full bg-0 ${bordered ? "border border-200" : ""} ${
           hasScrollY && hasScrollX
             ? "overflow-y-auto overflow-x-auto min-h-0"
@@ -975,7 +1003,16 @@ export function CommonTable<T extends Record<string, any> = any>({
                 return (
                   <tr
                     key={rowKeySafe.toString()}
+                    data-row-key={String(rowKeySafe)}
                     className={`group cursor-pointer bg-100 ${selected ? "bg-primary/10" : ""}`}
+                    onMouseEnter={() => {
+                      if (!isScrolling) setHoveredRowKey(rowKeySafe);
+                    }}
+                    onMouseLeave={() => {
+                      setHoveredRowKey((prev) =>
+                        prev === rowKeySafe ? null : prev,
+                      );
+                    }}
                     onClick={
                       onRowClick
                         ? (e) => {
@@ -1001,7 +1038,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                   >
                     {rowSelectionProp && rowSelectionProp.type !== "radio" && (
                       <td
-                        className={`${borderR} ${borderB} bg-0 px-3 py-3 group-hover:bg-50 ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[1] bg-0" : ""}`}
+                        className={`${borderR} ${borderB} bg-0 px-3 py-3 ${String(hoveredRowKey) === String(rowKeySafe) ? "bg-50" : ""} ${hasHorizontalOverflow && columnLayout[0]?.fixed ? `sticky z-[1] ${String(hoveredRowKey) === String(rowKeySafe) ? "bg-50" : "bg-0"}` : ""}`}
                         style={{
                           transition:
                             hasHorizontalOverflow && columnLayout[0]?.fixed
@@ -1038,7 +1075,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                     )}
                     {rowSelectionProp && rowSelectionProp.type === "radio" && (
                       <td
-                        className={`${borderR} ${borderB} bg-0 px-3 py-3 group-hover:bg-50 ${hasHorizontalOverflow && columnLayout[0]?.fixed ? "sticky z-[1] bg-0" : ""}`}
+                        className={`${borderR} ${borderB} bg-0 px-3 py-3 ${String(hoveredRowKey) === String(rowKeySafe) ? "bg-50" : ""} ${hasHorizontalOverflow && columnLayout[0]?.fixed ? `sticky z-[1] ${String(hoveredRowKey) === String(rowKeySafe) ? "bg-50" : "bg-0"}` : ""}`}
                         style={{
                           transition:
                             hasHorizontalOverflow && columnLayout[0]?.fixed
@@ -1095,7 +1132,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                       return (
                         <td
                           key={colKey.toString()}
-                          className={`${borderR} ${borderB} bg-0 ${cellSizeClass} text-sm text-950 group-hover:bg-50 ${bordered ? "last:border-r-0" : ""} ${isFixedLeft || isFixedRight ? "sticky z-[1] bg-0" : ""}`}
+                          className={`${borderR} ${borderB} bg-0 ${cellSizeClass} text-sm text-950 ${String(hoveredRowKey) === String(rowKeySafe) ? "bg-50" : ""} ${bordered ? "last:border-r-0" : ""} ${isFixedLeft || isFixedRight ? `sticky z-[1] ${String(hoveredRowKey) === String(rowKeySafe) ? "bg-50" : "bg-0"}` : ""}`}
                           style={{
                             ...(col.align ? { textAlign: col.align } : {}),
                             transition:
