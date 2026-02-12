@@ -95,6 +95,8 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
   variant = "bar",
   formatConditionLabel = defaultTagLabel,
 }) => {
+  // 整个筛选条容器，用于计算组件自身左右边界
+  const barRef = useRef<HTMLDivElement | null>(null);
   // 添加筛选按钮下拉的对齐方式：防止在极左/极右时弹层被遮挡
   const addAlignRef = useRef<HTMLDivElement | null>(null);
   const [addAlign, setAddAlign] = useState<"left" | "right">("right");
@@ -210,6 +212,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
   return (
     <>
       <div
+        ref={barRef}
         className={`flex flex-wrap items-center gap-2 rounded-0 border-b border-200 bg-0 py-2 text-sm text-950 ${className ?? ""}`}
       >
         <span className="flex h-6 w-6 shrink-0 items-center justify-center text-600">
@@ -259,12 +262,21 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                   if (
                     next &&
                     typeof window !== "undefined" &&
-                    addAlignRef.current
+                    addAlignRef.current &&
+                    barRef.current
                   ) {
-                    const rect = addAlignRef.current.getBoundingClientRect();
-                    const panelWidth = 224; // 下拉面板宽度 w-56
-                    // 按钮离左侧太近时，面板靠左对齐；否则默认靠右，避免被页面左右遮挡
-                    if (rect.left < panelWidth) {
+                    const btnRect =
+                      addAlignRef.current.getBoundingClientRect();
+                    const barRect = barRef.current.getBoundingClientRect();
+                    const panelWidth = 224; // 下拉面板宽度，对应 w-56
+
+                    // 以当前组件（整条 FilterBar）的左右为参考，计算按钮到左右的空间
+                    const spaceLeft = btnRect.left - barRect.left;
+                    const spaceRight = barRect.right - btnRect.right;
+
+                    // 如果按钮离左侧太近（左侧不足以完全放下面板），并且右侧空间更大，则面板靠左对齐（向右展开）
+                    // 否则默认靠右对齐（向左展开），尽量保证面板始终在当前组件内部或尽可能少被遮挡
+                    if (spaceLeft < panelWidth && spaceRight >= spaceLeft) {
                       setAddAlign("left");
                     } else {
                       setAddAlign("right");

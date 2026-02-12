@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from "react";
+import { createPortal } from "react-dom";
 import {
   CommonTable,
   FilterBuilder,
@@ -97,11 +104,60 @@ const filterFields: FilterFieldMeta[] = [
   },
 ];
 
+const TitleComponent = () => {
+  const [addOpen, setAddOpen] = useState(false);
+  const [anchor, setAnchor] = useState<{ left: number; top: number } | null>(
+    null,
+  );
+  const triggerRef = useRef<HTMLDivElement | null>(null);
+
+  const handleOpen = () => {
+    if (typeof document !== "undefined" && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setAnchor({
+        left: rect.left,
+        top: rect.bottom + 14, // 稍微下移一点，避开表头边框
+      });
+    }
+    setAddOpen(true);
+  };
+
+  const handleClose = () => {
+    setAddOpen(false);
+  };
+
+  return (
+    <>
+      <div
+        ref={triggerRef}
+        className="inline-flex cursor-pointer items-center"
+        aria-hidden
+        onClick={handleOpen}
+      >
+        会话ID
+      </div>
+      {addOpen && anchor && typeof document !== "undefined" && (
+        <>
+          <div
+            className="fixed z-[100] h-[300px] w-56 overflow-auto rounded-xl border border-gray-300 bg-gray-500"
+            style={{
+              left: anchor.left,
+              top: anchor.top,
+            }}
+          >
+            test弹窗背遮挡问题
+            <div onClick={handleClose}>X</div>
+          </div>
+        </>
+      )}
+    </>
+  );
+};
 const columns: CommonColumnType<SessionRecord>[] = [
   {
     key: "sessionId",
     dataIndex: "sessionId",
-    title: "会话ID",
+    title: <TitleComponent />,
     width: 280,
     fixed: "left",
     render: (val: string) => (
@@ -377,7 +433,7 @@ export function TableDemo() {
               },
             }}
             // 可选：是否显示边框，默认 true
-            bordered={false}
+            bordered={true}
             // 可选：表格尺寸 'small' | 'middle' | 'large'
             size="middle"
             // 可选：表格左上角标题
@@ -391,7 +447,7 @@ export function TableDemo() {
               onChange: setVisibleKeys,
             }}
             // 可选：表头/列固定与滚动区域
-            scroll={{ y: 600, x: 1200 }}
+            scroll={{ y: 150, x: 1200 }}
             // 可选：文案本地化（空态、加载中文案），默认内部文案
             // locale={{ emptyText: "暂无数据", loadingText: "加载中..." }}
             // 可选：点击行回调（例如打开详情侧边栏）

@@ -99,6 +99,7 @@ export function CommonTable<T extends Record<string, any> = any>({
         ? scrollX
         : parseInt(String(scrollX), 10) || 0;
   const hasScrollX = scrollX != null;
+  const hasScrollY = scrollY != null;
 
   const columnLayout = useMemo(() => {
     // 含选择列 + 数据列，每项 key/width/fixed
@@ -149,7 +150,7 @@ export function CommonTable<T extends Record<string, any> = any>({
     clientWidth: 0,
   });
 
-  const hasScroll = scrollY != null || scrollX != null;
+  const hasScroll = hasScrollY || hasScrollX;
 
   const handleScroll = useCallback(() => {
     if (!hasScroll) return;
@@ -162,6 +163,35 @@ export function CommonTable<T extends Record<string, any> = any>({
       clientWidth: el.clientWidth,
     });
   }, [scrollY, scrollX, hasScroll]);
+
+  // 内部滚动时，阻止滚轮事件冒泡到页面，避免联动外层滚动条
+  const handleWheel: React.WheelEventHandler<HTMLDivElement> = useCallback(
+    (e) => {
+      if (!hasScrollY) return;
+      const el = scrollContainerRef.current;
+      if (!el) return;
+
+      const deltaY = e.deltaY;
+      if (deltaY === 0) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      const atTop = scrollTop <= 0;
+      const atBottom = scrollTop + clientHeight >= scrollHeight;
+
+      // 阻止事件继续作用在外层滚动容器
+      e.preventDefault();
+      e.stopPropagation();
+
+      // 在内部手动滚动，保证体验一致
+      if ((deltaY < 0 && atTop) || (deltaY > 0 && atBottom)) {
+        // 已到边界时，轻微抵消多余滚动，避免“穿透”到外层
+        el.scrollTop += deltaY;
+      } else {
+        el.scrollTop += deltaY;
+      }
+    },
+    [hasScrollY],
+  );
 
   useEffect(() => {
     if (!hasScroll) return;
@@ -593,7 +623,16 @@ export function CommonTable<T extends Record<string, any> = any>({
       <div
         ref={scrollContainerRef}
         onScroll={hasScroll ? handleScroll : undefined}
-        className={`table-scroll-area min-w-0 w-full bg-0 ${bordered ? "border border-200" : ""} ${scrollY != null ? "overflow-y-auto overflow-x-auto min-h-0" : "overflow-x-auto"}`}
+        onWheel={hasScrollY ? handleWheel : undefined}
+        className={`table-scroll-area min-w-0 w-full bg-0 ${bordered ? "border border-200" : ""} ${
+          hasScrollY && hasScrollX
+            ? "overflow-y-auto overflow-x-auto min-h-0"
+            : hasScrollY
+              ? "overflow-y-auto min-h-0"
+              : hasScrollX
+                ? "overflow-x-auto"
+                : ""
+        }`}
         style={
           scrollY != null
             ? {
