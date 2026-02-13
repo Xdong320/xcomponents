@@ -197,6 +197,8 @@ const columns: CommonColumnType<SessionRecord>[] = [
     width: 140,
     fixed: "left",
     sorter: true,
+    filters: channels.map((c) => ({ text: c, value: c })),
+    filterMultiple: true,
   },
   {
     key: "duration",
@@ -362,6 +364,14 @@ export function TableDemo() {
     1,
     Math.ceil(filteredData.length / paginationPageSize),
   );
+  /** 自定义分页（pagination=false）时使用：模拟服务端分页，仅传当前页切片 */
+  const paginatedData = useMemo(() => {
+    const start = (paginationCurrent - 1) * paginationPageSize;
+    return filteredData.slice(start, start + paginationPageSize);
+  }, [filteredData, paginationCurrent, paginationPageSize]);
+
+  /** true=自定义分页+外部 TablePagination，false=默认分页（CommonTable 内置） */
+  const useCustomPagination = true;
   useEffect(() => {
     if (paginationCurrent > paginationTotalPages) {
       setPaginationCurrent(paginationTotalPages);
@@ -407,22 +417,22 @@ export function TableDemo() {
             formatConditionLabel={formatFilterLabel}
           />
           <CommonTable<SessionRecord>
-            // 必选：列配置
             columns={columns}
-            // 必选：数据源（本示例用过滤后的数据）
-            dataSource={filteredData}
-            // 可选：行 key 字段名或函数，默认 "key"
+            dataSource={useCustomPagination ? paginatedData : filteredData}
             rowKey="key"
-            // 可选：分页配置；传 false 关闭分页（这里只做数据切片，UI 由下方 TablePagination 渲染）
-            pagination={{
-              current: paginationCurrent,
-              pageSize: paginationPageSize,
-              serverSide: false,
-              onChange: (page, pageSize) => {
-                setPaginationCurrent(page);
-                setPaginationPageSize(pageSize);
-              },
-            }}
+            pagination={
+              useCustomPagination
+                ? false
+                : {
+                    current: paginationCurrent,
+                    pageSize: paginationPageSize,
+                    serverSide: false,
+                    onChange: (page, pageSize) => {
+                      setPaginationCurrent(page);
+                      setPaginationPageSize(pageSize);
+                    },
+                  }
+            }
             // 可选：行选择配置（多选、单选、受控 selectedRowKeys 等）
             rowSelection={{
               type: "checkbox",
@@ -433,7 +443,7 @@ export function TableDemo() {
               },
             }}
             // 可选：是否显示边框，默认 true
-            bordered={true}
+            bordered={false}
             // 可选：表格尺寸 'small' | 'middle' | 'large'
             size="middle"
             // 可选：表格左上角标题
@@ -457,25 +467,18 @@ export function TableDemo() {
             // 可选：分页 / 筛选 / 排序变化回调
             onChange={handleTableChange}
           />
-          <TablePagination
-            // 必选：当前页（从 1 开始）
-            current={paginationCurrent}
-            // 必选：每页条数
-            pageSize={paginationPageSize}
-            // 必选：总条数（这里用过滤后的总数）
-            total={filteredData.length}
-            // 必选：总页数（建议由外部根据 total/pageSize 计算）
-            totalPages={paginationTotalPages}
-            // 必选：页码或每页条数变更回调
-            onChange={(page, pageSize) => {
-              setPaginationCurrent(page);
-              setPaginationPageSize(pageSize);
-            }}
-            // 可选：自定义分页 UI；传入时只渲染 customRender 的内容
-            // customRender={(props) => <YourCustomPagination {...props} />}
-            // 可选：每页条数下拉选项，默认 [10, 20, 50, 100]
-            // pageSizeOptions={[10, 20, 50, 100]}
-          />
+          {useCustomPagination && (
+            <TablePagination
+              current={paginationCurrent}
+              pageSize={paginationPageSize}
+              total={filteredData.length}
+              totalPages={paginationTotalPages}
+              onChange={(page, pageSize) => {
+                setPaginationCurrent(page);
+                setPaginationPageSize(pageSize);
+              }}
+            />
+          )}
         </div>
       </div>
     </div>

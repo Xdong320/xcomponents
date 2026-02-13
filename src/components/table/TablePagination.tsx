@@ -197,7 +197,10 @@ export function TablePagination({
         </button>
         {pageSizeOpen && (
           <>
-            <div className="fixed inset-0 z-10" aria-hidden />
+            <div
+              className="fixed inset-0 z-10 pointer-events-none"
+              aria-hidden
+            />
             <div className="absolute right-0 bottom-full z-20 mb-2 w-32 rounded-xl border border-200 bg-0 p-1 shadow-lg">
               {pageSizeOptions.map((n) => {
                 const active = n === pageSize;

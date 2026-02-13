@@ -2,8 +2,8 @@
 
 ## 组件关系说明
 
-- **CommonTable**：主表格，不含 FilterBuilder、不含分页栏。需要筛选时单独引用 FilterBuilder（通常放表格上方）；需要分页栏时单独引用 TablePagination（通常放表格下方），`pagination` 仅控制当前页/每页条数等数据行为。
-- **TablePagination**：分页组件，不集成在 CommonTable 内，需用时单独引用并放在表格下方，与 `pagination` 的 current/pageSize/onChange 及数据源联动。
+- **CommonTable**：主表格，默认内置 TablePagination；`pagination={false}` 时不展示内置分页。不含 FilterBuilder，需要筛选时单独引用（通常放表格上方）。表头列筛选弹窗通过 Portal 渲染，选后不立即关闭，点击外部关闭。
+- **TablePagination**：分页组件，CommonTable 默认内置；`pagination={false}` 时需单独引用并放在表格下方（常用于自定义/服务端分页）。
 - **FilterBuilder**：筛选条件组件，不集成在 CommonTable 内，需用时单独引用并自行布局（如放在表格上方）。
 
 ---
@@ -30,20 +30,23 @@
 | 无列设置 | 不传 `columnSettingsProps` | 显示全部列 |
 | 列设置清空 | 列设置里点「清空」 | 仅剩选择列（若有），空数据/加载行 colSpan 正确 |
 
-### 分页（TablePagination 单独引用）
+### 分页
 
 | 场景 | 操作 | 预期 |
 |------|------|------|
-| 第 5 页后筛选到 10 条 | 筛选使数据变少 | 页面侧将当前页 clamp 到有效页（如 1/1），不空白 |
-| 切换每页条数 | 选 20 条/页 | TablePagination 与 CommonTable 的 pagination 联动，列表与页码一致 |
-| 不需要分页 | 不传 `pagination` 或 `pagination={false}` 且不渲染 TablePagination | 表格展示全部数据，无分页栏 |
+| 默认分页 | 传 `pagination={{ current, pageSize, onChange }}` 与完整数据 | 表格内部切片，底部显示 TablePagination，切换页码/每页条数正常 |
+| 切换每页条数 | 选 20 条/页 | 列表与页码一致，表格条数更新 |
+| 第 5 页后筛选到 10 条 | 筛选使数据变少 | 当前页 clamp 到有效页，不空白 |
+| 自定义分页 | `pagination={false}`，传已切片数据，外部 TablePagination | 表格仅展示传入数据，分页由外部控制（模拟服务端） |
+| 关闭分页 | `pagination={false}` 且不渲染 TablePagination | 表格展示全部传入数据，无分页栏 |
 
 ### 排序与列筛选
 
 | 场景 | 操作 | 预期 |
 |------|------|------|
 | 点击排序 | 点列头排序图标 | 顺序变化，排序箭头状态正确 |
-| 列头筛选 | 选筛选值 | 行按筛选条件过滤，表头筛选 UI 可关闭 |
+| 列头筛选 | 选筛选值 | 行按筛选条件过滤；选后不立即关闭，点击弹窗外部关闭；弹窗不被表格 overflow 遮挡 |
+| 列头筛选 filterMultiple | 不传或 `true` 多选、`false` 单选 | 默认多选（checkbox）；`filterMultiple: false` 时单选（radio），点击已选项可清除 |
 | 无 sorter/filters | 列未配置排序/筛选 | 无排序/筛选 UI，无报错 |
 
 ### 行选择
@@ -104,7 +107,7 @@
 npm run dev
 ```
 
-打开示例页（FilterBuilder 在表格上方单独引用），按上表逐项操作（空数据、筛选到少量数据翻页、固定列横向滚动、筛选栏保存/回显等）做一次回归即可。
+打开示例页（TableDemo），按上表逐项操作（默认/自定义分页切换、空数据、筛选到少量数据翻页、列头筛选弹窗、固定列横向滚动、筛选栏保存/回显等）做一次回归即可。
 
 ---
 

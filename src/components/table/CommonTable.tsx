@@ -1,11 +1,14 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { ColumnSettings } from "./ColumnSettings";
+import { TablePagination } from "./TablePagination";
 import type {
   CommonColumnType,
   CommonTableProps,
@@ -330,6 +333,22 @@ export function CommonTable<T extends Record<string, any> = any>({
   const [filterDropdownOpen, setFilterDropdownOpen] = useState<string | null>(
     null,
   );
+  const filterTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const [filterDropdownRect, setFilterDropdownRect] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!filterDropdownOpen) {
+      setFilterDropdownRect(null);
+      return;
+    }
+    const el = filterTriggerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setFilterDropdownRect({ top: rect.bottom + 4, left: rect.left });
+  }, [filterDropdownOpen]);
 
   const isServerSide = paginationConfig && paginationConfig.serverSide;
   const currentPage = paginationConfig !== false ? paginationConfig.current : 1;
@@ -382,10 +401,19 @@ export function CommonTable<T extends Record<string, any> = any>({
   const effectiveCurrentPage =
     total === 0 ? 1 : Math.min(currentPage, totalPages);
   const displayData = useMemo(() => {
+    // pagination={false}：不做切片，由外部传入已分页数据（如自定义分页、服务端分页）
+    if (paginationProp === false) return sortedData;
     if (isServerSide) return dataSource;
     const start = (effectiveCurrentPage - 1) * pageSize;
     return sortedData.slice(start, start + pageSize);
-  }, [isServerSide, dataSource, sortedData, effectiveCurrentPage, pageSize]);
+  }, [
+    paginationProp,
+    isServerSide,
+    dataSource,
+    sortedData,
+    effectiveCurrentPage,
+    pageSize,
+  ]);
 
   useEffect(() => {
     if (isServerSide || total === 0) return;
@@ -463,7 +491,7 @@ export function CommonTable<T extends Record<string, any> = any>({
     (columnKey: Key, value: Key[] | null) => {
       const newFilters = { ...filters, [columnKey]: value };
       setFilters(newFilters);
-      setFilterDropdownOpen(null);
+      // 选后不关闭，点击弹窗外部（遮罩）关闭
       const newPagination = {
         ...paginationConfig,
         current: 1,
@@ -788,7 +816,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                 const key = getColumnKey(col, columns.indexOf(col));
                 const layoutIndex = (rowSelectionProp ? 1 : 0) + colIndex;
                 const layout = columnLayout[layoutIndex];
-                const hasSorter = col.sorter != null;
+                const hasSorter = !!col.sorter;
                 const hasFilter = col.filters && col.filters.length > 0;
                 const currentOrder =
                   sorter.field === key || sorter.field === col.dataIndex
@@ -906,6 +934,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                       {hasFilter && (
                         <div className="relative">
                           <button
+                            ref={filterOpen ? filterTriggerRef : undefined}
                             type="button"
                             onClick={() =>
                               setFilterDropdownOpen(
@@ -915,56 +944,102 @@ export function CommonTable<T extends Record<string, any> = any>({
                             className="rounded p-0.5 text-600 hover:bg-100 hover:text-950"
                             title="筛选"
                           >
-                            ◆
-                          </button>
-                          {filterOpen && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-10"
-                                aria-hidden
-                                onClick={() => setFilterDropdownOpen(null)}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="20"
+                              height="20"
+                              viewBox="0 0 20 20"
+                              fill="none"
+                              className="shrink-0"
+                            >
+                              <path
+                                d="M8.5 14.5H11.5V13H8.5V14.5ZM3.25 5.5V7H16.75V5.5H3.25ZM5.5 10.75H14.5V9.25H5.5V10.75Z"
+                                fill="currentColor"
                               />
-                              <div className="absolute left-0 top-full z-20 mt-1 w-40 rounded-xl border border-200 bg-0 p-2 shadow-lg transition-opacity duration-150">
-                                {(col.filters || []).map((f) => {
-                                  const selected = (
-                                    filters[key] ?? []
-                                  ).includes(f.value);
-                                  return (
-                                    <label
-                                      key={String(f.value)}
-                                      className="flex cursor-pointer items-center gap-2 py-1 text-sm text-950"
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        checked={selected}
-                                        onChange={(e) => {
-                                          const current = filters[key] ?? [];
-                                          const next = e.target.checked
-                                            ? [...current, f.value]
-                                            : current.filter(
-                                                (v) => v !== f.value,
-                                              );
-                                          handleFilterChange(
-                                            key,
-                                            next.length ? next : null,
-                                          );
-                                        }}
-                                        className="h-3 w-3"
-                                      />
-                                      {f.text}
-                                    </label>
-                                  );
-                                })}
-                                <button
-                                  type="button"
-                                  onClick={() => handleFilterChange(key, null)}
-                                  className="mt-1 w-full rounded-lg border border-200 px-2 py-1 text-sm text-600 hover:bg-100"
+                            </svg>
+                          </button>
+                          {filterOpen &&
+                            filterDropdownRect &&
+                            typeof document !== "undefined" &&
+                            createPortal(
+                              <>
+                                <div
+                                  className="fixed inset-0 z-[100]"
+                                  aria-hidden
+                                  onClick={() => setFilterDropdownOpen(null)}
+                                />
+                                <div
+                                  className="fixed z-[101] w-40 rounded-xl border border-200 bg-0 p-2 shadow-lg"
+                                  style={{
+                                    top: filterDropdownRect.top,
+                                    left: filterDropdownRect.left,
+                                  }}
                                 >
-                                  重置
-                                </button>
-                              </div>
-                            </>
-                          )}
+                                  {(col.filters || []).map((f) => {
+                                    const filterMultiple =
+                                      col.filterMultiple !== false;
+                                    const current = filters[key] ?? [];
+                                    const selected = current.includes(f.value);
+                                    return (
+                                      <label
+                                        key={String(f.value)}
+                                        className="flex cursor-pointer items-center gap-2 py-1 text-sm text-950"
+                                        onClick={
+                                          !filterMultiple && selected
+                                            ? () =>
+                                                handleFilterChange(key, null)
+                                            : undefined
+                                        }
+                                      >
+                                        <input
+                                          type={
+                                            filterMultiple
+                                              ? "checkbox"
+                                              : "radio"
+                                          }
+                                          name={
+                                            filterMultiple
+                                              ? undefined
+                                              : `filter-${String(key)}`
+                                          }
+                                          checked={selected}
+                                          onChange={(e) => {
+                                            if (filterMultiple) {
+                                              const next = e.target.checked
+                                                ? [...current, f.value]
+                                                : current.filter(
+                                                    (v) => v !== f.value,
+                                                  );
+                                              handleFilterChange(
+                                                key,
+                                                next.length ? next : null,
+                                              );
+                                            } else {
+                                              handleFilterChange(
+                                                key,
+                                                [f.value],
+                                              );
+                                            }
+                                          }}
+                                          className="h-3 w-3"
+                                        />
+                                        {f.text}
+                                      </label>
+                                    );
+                                  })}
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleFilterChange(key, null)
+                                    }
+                                    className="mt-1 w-full rounded-lg border border-200 px-2 py-1 text-sm text-600 hover:bg-100"
+                                  >
+                                    重置
+                                  </button>
+                                </div>
+                              </>,
+                              document.body,
+                            )}
                         </div>
                       )}
                     </div>
@@ -1168,7 +1243,23 @@ export function CommonTable<T extends Record<string, any> = any>({
         </table>
       </div>
 
-      {/* 分页不集成：需用时在页面中单独引用 TablePagination，与 pagination 的 current/pageSize/total/onChange 联动 */}
+      {/* 默认分页：pagination={false} 时不展示 */}
+      {paginationProp !== false && paginationConfig !== false && (
+        <TablePagination
+          current={effectiveCurrentPage}
+          pageSize={pageSize}
+          total={isServerSide ? (paginationConfig?.total ?? 0) : total}
+          totalPages={Math.max(
+            1,
+            Math.ceil(
+              (isServerSide ? (paginationConfig?.total ?? 0) : total) /
+                pageSize,
+            ),
+          )}
+          onChange={handlePaginationChange}
+          customRender={paginationConfig.render}
+        />
+      )}
     </div>
   );
 }

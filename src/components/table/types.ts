@@ -105,6 +105,7 @@ export interface CommonColumnType<T = any> {
   defaultSortOrder?: SortOrder;
   sortDirections?: SortOrder[];
   filters?: Array<{ text: React.ReactNode; value: React.Key }>;
+  /** 是否多选，默认 true；false 时单选（radio），点击已选项可清除 */
   filterMultiple?: boolean;
   onFilter?: (value: React.Key, record: T) => boolean;
   ellipsis?: boolean;
