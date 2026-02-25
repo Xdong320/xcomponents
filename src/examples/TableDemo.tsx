@@ -13,6 +13,7 @@ import {
   type CommonColumnType,
   type FilterCondition,
   type FilterConditionDateValue,
+  type FilterConditionRangeValue,
   type FilterFieldMeta,
   type Key,
 } from "../components/table";
@@ -70,6 +71,16 @@ const demoData: SessionRecord[] = Array.from({ length: 48 }, (_, i) => {
   };
 });
 
+function isRangeValue(v: unknown): v is FilterConditionRangeValue {
+  return (
+    v != null &&
+    typeof v === "object" &&
+    ("min" in v || "max" in v) &&
+    !("when" in v) &&
+    !("date" in v)
+  );
+}
+
 const filterFields: FilterFieldMeta[] = [
   {
     field: "sessionId",
@@ -88,12 +99,28 @@ const filterFields: FilterFieldMeta[] = [
     field: "durationSeconds",
     label: "会话时长",
     type: "number",
+    range: true,
+  },
+  {
+    field: "durationSeconds1",
+    label: "会话时长1",
+    type: "number",
+    // range: true,
     operators: [">", "<", ">=", "<=", "="],
+    operatorsText: {
+      // 仅影响展示
+      ">": "大于",
+      "<": "小于",
+      ">=": "大于等于",
+      "<=": "小于等于",
+      "=": "等于",
+    },
   },
   {
     field: "roundCount",
     label: "会话轮次",
-    type: "text",
+    type: "number",
+    range: true,
     operators: ["=", "包含"],
   },
   {
@@ -287,6 +314,20 @@ export function TableDemo() {
     setPaginationCurrent(1);
   }, []);
 
+  /** 从记录中取用于范围筛选的数值（会话轮次从 "5次" 解析为 5） */
+  const getNumericValue = useCallback(
+    (record: SessionRecord, field: string): number => {
+      const raw = (record as unknown as Record<string, unknown>)[field];
+      if (field === "roundCount") {
+        const s = String(raw ?? "");
+        const match = s.match(/(\d+)/);
+        return match ? parseInt(match[1], 10) : NaN;
+      }
+      return Number(raw);
+    },
+    [],
+  );
+
   const filteredData = useMemo(() => {
     if (!filterConditions.length) return demoData;
     return demoData.filter((record) => {
@@ -294,6 +335,24 @@ export function TableDemo() {
         const recordVal = (record as unknown as Record<string, unknown>)[
           c.field
         ];
+        if (c.type === "number" && isRangeValue(c.value)) {
+          const r = c.value as FilterConditionRangeValue;
+          const num = getNumericValue(record, c.field);
+          if (Number.isNaN(num)) return false;
+          if (
+            r.min != null &&
+            !Number.isNaN(Number(r.min)) &&
+            num < Number(r.min)
+          )
+            return false;
+          if (
+            r.max != null &&
+            !Number.isNaN(Number(r.max)) &&
+            num > Number(r.max)
+          )
+            return false;
+          return true;
+        }
         if (c.type === "number") {
           const num = Number(recordVal);
           const v = Number(c.value);
@@ -358,7 +417,7 @@ export function TableDemo() {
         return true;
       });
     });
-  }, [filterConditions]);
+  }, [filterConditions, getNumericValue]);
 
   const paginationTotalPages = Math.max(
     1,
@@ -386,6 +445,16 @@ export function TableDemo() {
       const d = v.date || "";
       const t = v.time || "00:00";
       return `${c.label} ${when} ${d} ${t}`.trim();
+    }
+    if (c.type === "number" && isRangeValue(c.value)) {
+      const r = c.value as FilterConditionRangeValue;
+      const hasMin = r.min !== undefined && !Number.isNaN(Number(r.min));
+      const hasMax = r.max !== undefined && !Number.isNaN(Number(r.max));
+      const suffix = c.field === "durationSeconds" ? "s" : "次";
+      if (hasMin && hasMax) return `${c.label} ${r.min}～${r.max}${suffix}`;
+      if (hasMin) return `${c.label} ≥ ${r.min}${suffix}`;
+      if (hasMax) return `${c.label} ≤ ${r.max}${suffix}`;
+      return `${c.label} 范围`;
     }
     const value =
       c.value === undefined || c.value === "" ? "" : String(c.value);

@@ -16,6 +16,7 @@ export type {
   FilterBuilderProps,
   FilterCondition,
   FilterConditionDateValue,
+  FilterConditionRangeValue,
   FilterFieldMeta,
   FilterFieldType,
   SavedFilterPreset,

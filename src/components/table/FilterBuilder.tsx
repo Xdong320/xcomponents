@@ -9,6 +9,7 @@ import type {
   FilterBuilderProps,
   FilterCondition,
   FilterConditionDateValue,
+  FilterConditionRangeValue,
   FilterFieldMeta,
   SavedFilterPreset,
 } from "./types";
@@ -40,20 +41,27 @@ function savePresets(id: string, presets: SavedFilterPreset[]) {
 }
 
 function createEmptyCondition(fieldMeta: FilterFieldMeta): FilterCondition {
-  const ops = getOperatorsForType(fieldMeta.type);
+  const ops = getOperatorsForType(fieldMeta.type, fieldMeta.range);
+  const isRangeNumber = fieldMeta.type === "number" && fieldMeta.range === true;
   return {
     field: fieldMeta.field,
     label: fieldMeta.label,
     type: fieldMeta.type,
-    operator: ops[0] ?? "=",
+    operator: isRangeNumber ? "范围" : (ops[0] ?? "="),
     value:
       fieldMeta.type === "date" || fieldMeta.type === "dateRange"
         ? { when: "after", date: "", time: "00:00" }
-        : undefined,
+        : isRangeNumber
+          ? { min: undefined, max: undefined }
+          : undefined,
   };
 }
 
-function getOperatorsForType(type: FilterFieldMeta["type"]): string[] {
+function getOperatorsForType(
+  type: FilterFieldMeta["type"],
+  range?: boolean,
+): string[] {
+  if (type === "number" && range) return ["范围"];
   switch (type) {
     case "date":
     case "dateRange":
@@ -67,6 +75,16 @@ function getOperatorsForType(type: FilterFieldMeta["type"]): string[] {
   }
 }
 
+function isRangeValue(v: unknown): v is FilterConditionRangeValue {
+  return (
+    v != null &&
+    typeof v === "object" &&
+    ("min" in v || "max" in v) &&
+    !("when" in v) &&
+    !("date" in v)
+  );
+}
+
 function defaultTagLabel(c: FilterCondition): string {
   if (c.type === "date" || c.type === "dateRange") {
     const v = c.value as FilterConditionDateValue | undefined;
@@ -75,6 +93,15 @@ function defaultTagLabel(c: FilterCondition): string {
     const d = v.date || "";
     const t = v.time || "00:00";
     return `${c.label} ${when} ${d} ${t}`.trim();
+  }
+  if (c.type === "number" && isRangeValue(c.value)) {
+    const r = c.value as FilterConditionRangeValue;
+    const hasMin = r.min !== undefined && !Number.isNaN(Number(r.min));
+    const hasMax = r.max !== undefined && !Number.isNaN(Number(r.max));
+    if (hasMin && hasMax) return `${c.label} ${r.min}～${r.max}`;
+    if (hasMin) return `${c.label} ≥ ${r.min}`;
+    if (hasMax) return `${c.label} ≤ ${r.max}`;
+    return `${c.label} 范围`;
   }
   const value = c.value === undefined || c.value === "" ? "" : String(c.value);
   return value
@@ -265,8 +292,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                     addAlignRef.current &&
                     barRef.current
                   ) {
-                    const btnRect =
-                      addAlignRef.current.getBoundingClientRect();
+                    const btnRect = addAlignRef.current.getBoundingClientRect();
                     const barRect = barRef.current.getBoundingClientRect();
                     const panelWidth = 224; // 下拉面板宽度，对应 w-56
 
@@ -508,6 +534,8 @@ function ConditionDialog({
 }) {
   const isDate = condition.type === "date" || condition.type === "dateRange";
   const isNumber = condition.type === "number";
+  const isNumberRange = isNumber && fieldMeta.range === true;
+  const isNumberSingle = isNumber && !fieldMeta.range;
   const isText = condition.type === "text";
   const isSelect = condition.type === "select";
   const isBoolean = condition.type === "boolean";
@@ -515,6 +543,10 @@ function ConditionDialog({
     when: "after",
     date: "",
     time: "00:00",
+  };
+  const rangeValue = (condition.value as FilterConditionRangeValue) || {
+    min: undefined,
+    max: undefined,
   };
 
   return (
@@ -547,21 +579,21 @@ function ConditionDialog({
               <label className="mb-1 block text-sm text-600">
                 before/after
               </label>
-              <select
+              <ConditionSelect
                 value={dateValue.when ?? "after"}
-                onChange={(e) =>
+                onChange={(val) =>
                   onUpdate({
                     value: {
                       ...dateValue,
-                      when: e.target.value as "before" | "after",
+                      when: val as "before" | "after",
                     },
                   })
                 }
-                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
-              >
-                <option value="before">before</option>
-                <option value="after">after</option>
-              </select>
+                options={[
+                  { value: "before", label: "before" },
+                  { value: "after", label: "after" },
+                ]}
+              />
             </div>
             <div className="mb-2">
               <label className="mb-1 block text-sm text-600">
@@ -594,21 +626,63 @@ function ConditionDialog({
           </>
         )}
 
-        {isNumber && (
+        {isNumberRange && (
+          <>
+            <div className="mb-2">
+              <label className="mb-1 block text-sm text-600">至少</label>
+              <input
+                type="number"
+                value={rangeValue.min ?? ""}
+                onChange={(e) =>
+                  onUpdate({
+                    value: {
+                      ...rangeValue,
+                      min:
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value),
+                    },
+                  })
+                }
+                placeholder="不填表示不限制"
+                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none placeholder:text-400 focus:border-primary"
+              />
+            </div>
+            <div className="mb-3">
+              <label className="mb-1 block text-sm text-600">至多</label>
+              <input
+                type="number"
+                value={rangeValue.max ?? ""}
+                onChange={(e) =>
+                  onUpdate({
+                    value: {
+                      ...rangeValue,
+                      max:
+                        e.target.value === ""
+                          ? undefined
+                          : Number(e.target.value),
+                    },
+                  })
+                }
+                placeholder="不填表示不限制"
+                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none placeholder:text-400 focus:border-primary"
+              />
+            </div>
+          </>
+        )}
+
+        {isNumberSingle && (
           <>
             <div className="mb-2">
               <label className="mb-1 block text-sm text-600">操作符</label>
-              <select
+              <ConditionSelect
                 value={condition.operator}
-                onChange={(e) => onUpdate({ operator: e.target.value })}
-                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
-              >
-                {getOperatorsForType("number").map((op) => (
-                  <option key={op} value={op}>
-                    {op}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => onUpdate({ operator: val })}
+                options={getOperatorsForType("number").map((op) => ({
+                  value: op,
+                  label: op,
+                }))}
+              />
             </div>
             <div className="mb-3">
               <label className="mb-1 block text-sm text-600">值</label>
@@ -633,19 +707,16 @@ function ConditionDialog({
           <>
             <div className="mb-2">
               <label className="mb-1 block text-sm text-600">操作符</label>
-              <select
+              <ConditionSelect
                 value={condition.operator}
-                onChange={(e) => onUpdate({ operator: e.target.value })}
-                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
-              >
-                {(fieldMeta.operators ?? getOperatorsForType("text")).map(
-                  (op) => (
-                    <option key={op} value={op}>
-                      {op}
-                    </option>
-                  ),
-                )}
-              </select>
+                onChange={(val) => onUpdate({ operator: val })}
+                options={(
+                  fieldMeta.operators ?? getOperatorsForType("text")
+                ).map((op) => ({
+                  value: op,
+                  label: op,
+                }))}
+              />
             </div>
             <div className="mb-3">
               <label className="mb-1 block text-sm text-600">值</label>
@@ -665,36 +736,32 @@ function ConditionDialog({
           <>
             <div className="mb-2">
               <label className="mb-1 block text-sm text-600">操作符</label>
-              <select
+              <ConditionSelect
                 value={condition.operator}
-                onChange={(e) => onUpdate({ operator: e.target.value })}
-                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
-              >
-                {(fieldMeta.operators ?? ["="]).map((op) => (
-                  <option key={op} value={op}>
-                    {op}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => onUpdate({ operator: val })}
+                options={(fieldMeta.operators ?? ["="]).map((op) => ({
+                  value: op,
+                  label: op,
+                }))}
+              />
             </div>
             <div className="mb-3">
               <label className="mb-1 block text-sm text-600">值</label>
-              <select
+              <ConditionSelect
                 value={condition.value ?? ""}
-                onChange={(e) =>
+                onChange={(val) =>
                   onUpdate({
-                    value: e.target.value === "" ? undefined : e.target.value,
+                    value: val === "" ? undefined : val,
                   })
                 }
-                className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
-              >
-                <option value="">请选择</option>
-                {fieldMeta.options?.map((opt) => (
-                  <option key={String(opt.value)} value={String(opt.value)}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: "", label: "请选择" },
+                  ...(fieldMeta.options ?? []).map((opt) => ({
+                    value: String(opt.value),
+                    label: opt.label,
+                  })),
+                ]}
+              />
             </div>
           </>
         )}
@@ -702,24 +769,21 @@ function ConditionDialog({
         {isBoolean && (
           <div className="mb-3">
             <label className="mb-1 block text-sm text-600">值</label>
-            <select
+            <ConditionSelect
               value={
                 condition.value === undefined ? "" : String(condition.value)
               }
-              onChange={(e) =>
+              onChange={(val) =>
                 onUpdate({
-                  value:
-                    e.target.value === ""
-                      ? undefined
-                      : e.target.value === "true",
+                  value: val === "" ? undefined : val === "true",
                 })
               }
-              className="w-full rounded-xl border border-200 bg-0 px-3 py-2 text-sm text-950 outline-none focus:border-primary"
-            >
-              <option value="">全部</option>
-              <option value="true">是</option>
-              <option value="false">否</option>
-            </select>
+              options={[
+                { value: "", label: "全部" },
+                { value: "true", label: "是" },
+                { value: "false", label: "否" },
+              ]}
+            />
           </div>
         )}
 
@@ -733,6 +797,90 @@ function ConditionDialog({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+interface ConditionSelectOption {
+  value: string;
+  label: React.ReactNode;
+}
+
+function ConditionSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: ConditionSelectOption[];
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
+
+  const selected = options.find((opt) => opt.value === value);
+
+  return (
+    <div ref={containerRef} className="relative w-full text-sm">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex w-full items-center justify-between rounded-xl border border-200 bg-0 px-3 py-2 text-left text-sm text-950 outline-none focus:border-primary"
+      >
+        <span className="min-w-0 flex-1 truncate">
+          {selected ? selected.label : "请选择"}
+        </span>
+        <svg
+          className="ml-2 h-4 w-4 shrink-0 text-600"
+          viewBox="0 0 16 16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M4 6L8 10L12 6"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-56 overflow-auto rounded-xl border border-200 bg-0 py-1 text-sm shadow-lg">
+          {options.map((opt) => {
+            const active = opt.value === value;
+            return (
+              <button
+                key={String(opt.value)}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center px-3 py-1.5 text-left ${
+                  active ? "bg-primary/5 text-primary" : "text-950 hover:bg-100"
+                }`}
+              >
+                <span className="truncate">{opt.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -16,6 +16,8 @@ export interface FilterFieldMeta {
   type: FilterFieldType;
   operators?: string[];
   options?: Array<{ label: string; value: string | number | boolean }>;
+  /** 为 true 时，该字段使用范围筛选（最小值～最大值），仅对 number 类型生效 */
+  range?: boolean;
 }
 
 export interface FilterCondition {
@@ -31,6 +33,12 @@ export interface FilterConditionDateValue {
   when?: 'before' | 'after';
   date?: string; // MM/DD/YYYY
   time?: string; // HH:mm
+}
+
+/** number 范围筛选 value：最小值、最大值（可不填表示不限制该端） */
+export interface FilterConditionRangeValue {
+  min?: number;
+  max?: number;
 }
 
 /** 已保存的筛选组合（localStorage） */
@@ -125,7 +133,7 @@ export interface ColumnSettingsProps<T = any> {
   onChange: (visibleKeys: React.Key[]) => void;
 }
 
-export interface CommonTableOnChangePagination extends PaginationConfig {}
+export interface CommonTableOnChangePagination extends PaginationConfig { }
 
 export interface CommonTableOnChangeExtra<T = any> {
   currentDataSource: T[];
