@@ -369,7 +369,7 @@ export function DatePicker(props: DatePickerProps) {
                     handlePastNApply(Number.isInteger(n) && n > 0 ? n : 1);
                   }
                 }}
-                className={`flex items-center gap-1.5 py-2 pl-3 pr-2 w-45 rounded-lg cursor-pointer ${
+                className={`flex items-center gap-1.5 py-2 pl-3 pr-2 w-50 rounded-lg cursor-pointer ${
                   isActive ? "bg-50" : ""
                 }`}
               >
@@ -429,7 +429,7 @@ export function DatePicker(props: DatePickerProps) {
                     );
                   }
                 }}
-                className={`flex items-center gap-1.5 py-2 pl-3 pr-2 w-45 rounded-lg cursor-pointer ${
+                className={`flex items-center gap-1.5 py-2 pl-3 pr-2 w-50 rounded-lg cursor-pointer ${
                   isActive ? "bg-50" : ""
                 }`}
               >
@@ -471,7 +471,7 @@ export function DatePicker(props: DatePickerProps) {
               key={key}
               type="button"
               onClick={() => handlePreset(key)}
-              className={`flex items-center gap-2 py-2 pl-3 pr-2 w-45 border-0 cursor-pointer font-medium text-sm text-slate-900 rounded-lg ${
+              className={`flex items-center gap-2 py-2 pl-3 pr-2 w-50 border-0 cursor-pointer font-medium text-sm text-slate-900 rounded-lg ${
                 activePreset === key ? "bg-50" : ""
               }`}
             >
@@ -490,6 +490,7 @@ export function DatePicker(props: DatePickerProps) {
               开始日期
             </label>
             <input
+              disabled
               type="text"
               value={startInputValue}
               onChange={(e) => setStartInputValue(e.target.value)}
@@ -507,6 +508,7 @@ export function DatePicker(props: DatePickerProps) {
               结束日期
             </label>
             <input
+              disabled
               type="text"
               value={endInputValue}
               onChange={(e) => setEndInputValue(e.target.value)}
@@ -601,7 +603,7 @@ export function DatePicker(props: DatePickerProps) {
         </div>
 
         {/* 日期格子：7 列网格，一行 7 个，与星期对齐；行间距 py-2 */}
-        <div className="grid grid-cols-7 w-full rounded-xl gap-y-2 py-2">
+        <div className="grid grid-cols-7 w-full rounded-xl gap-y-2 py-0">
           {gridDays.map(({ date, isCurrent }, idx) => {
             const isDisabled = disabledDate?.(date) ?? false;
             const inRange = isInRange(date, start, end);
