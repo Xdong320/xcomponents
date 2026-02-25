@@ -6,6 +6,18 @@ import React, {
   useState,
 } from "react";
 import type { DatePickerProps, DateRange, PresetKey } from "./types";
+
+function usePendingValue(
+  value: DateRange,
+): [DateRange, (v: DateRange) => void] {
+  const [pendingValue, setPendingValue] = useState<DateRange>(value);
+  const startTs = value[0]?.getTime() ?? null;
+  const endTs = value[1]?.getTime() ?? null;
+  useEffect(() => {
+    setPendingValue(value);
+  }, [startTs, endTs]);
+  return [pendingValue, setPendingValue];
+}
 import {
   formatDateForInput,
   getCalendarWeeks,
@@ -81,11 +93,13 @@ export function DatePicker(props: DatePickerProps) {
   const {
     value = [null, null],
     onChange,
+    onCancel,
     className,
     disabledDate,
     yearRange = [1970, new Date().getFullYear() + 50],
   } = props;
-  const [start, end] = value;
+  const [pendingValue, setPendingValue] = usePendingValue(value);
+  const [start, end] = pendingValue;
 
   const today = useMemo(() => {
     const d = new Date();
@@ -116,41 +130,32 @@ export function DatePicker(props: DatePickerProps) {
     setEndInputValue(end ? formatDateForInput(end) : "");
   }, [start, end]);
 
-  const handlePreset = useCallback(
-    (key: PresetKey) => {
-      if (key === "custom") return;
-      if (key === "lastN" || key === "lastNExcludeToday") return; // 由下方 N 输入框应用
-      const [s, e] = getPresetRange(key);
-      onChange?.([s, e]);
-      setViewYear(s.getFullYear());
-      setViewMonth(s.getMonth() + 1);
-    },
-    [onChange],
-  );
+  const handlePreset = useCallback((key: PresetKey) => {
+    if (key === "custom") return;
+    if (key === "lastN" || key === "lastNExcludeToday") return; // 由下方 N 输入框应用
+    const [s, e] = getPresetRange(key);
+    setPendingValue([s, e]);
+    setViewYear(s.getFullYear());
+    setViewMonth(s.getMonth() + 1);
+  }, []);
 
-  const handlePastNApply = useCallback(
-    (n: number) => {
-      const num = Math.max(1, Math.floor(n));
-      const [s, e] = getLastNDaysRange(num);
-      onChange?.([s, e]);
-      setViewYear(s.getFullYear());
-      setViewMonth(s.getMonth() + 1);
-      setPastNInput(String(num));
-    },
-    [onChange],
-  );
+  const handlePastNApply = useCallback((n: number) => {
+    const num = Math.max(1, Math.floor(n));
+    const [s, e] = getLastNDaysRange(num);
+    setPendingValue([s, e]);
+    setViewYear(s.getFullYear());
+    setViewMonth(s.getMonth() + 1);
+    setPastNInput(String(num));
+  }, []);
 
-  const handlePastNExcludeTodayApply = useCallback(
-    (n: number) => {
-      const num = Math.max(1, Math.floor(n));
-      const [s, e] = getLastNDaysRangeExcludeToday(num);
-      onChange?.([s, e]);
-      setViewYear(s.getFullYear());
-      setViewMonth(s.getMonth() + 1);
-      setPastNExcludeTodayInput(String(num));
-    },
-    [onChange],
-  );
+  const handlePastNExcludeTodayApply = useCallback((n: number) => {
+    const num = Math.max(1, Math.floor(n));
+    const [s, e] = getLastNDaysRangeExcludeToday(num);
+    setPendingValue([s, e]);
+    setViewYear(s.getFullYear());
+    setViewMonth(s.getMonth() + 1);
+    setPastNExcludeTodayInput(String(num));
+  }, []);
 
   const handlePrevMonth = useCallback(() => {
     if (viewMonth <= 1) {
@@ -173,51 +178,51 @@ export function DatePicker(props: DatePickerProps) {
   const handleDayClick = useCallback(
     (d: Date) => {
       if (disabledDate?.(d)) return;
-      const [s, e] = value;
+      const [s, e] = pendingValue;
       if (!s || (s && e)) {
-        onChange?.([d, null]);
+        setPendingValue([d, null]);
         return;
       }
       if (d.getTime() < s.getTime()) {
-        onChange?.([d, s]);
+        setPendingValue([d, s]);
       } else {
-        onChange?.([s, d]);
+        setPendingValue([s, d]);
       }
     },
-    [value, onChange, disabledDate],
+    [pendingValue, disabledDate],
   );
 
-  /** 从开始日期输入框提交：解析并更新 value，仅改开始日期 */
+  /** 从开始日期输入框提交：解析并更新待确认范围，仅改开始日期 */
   const applyStartInput = useCallback(() => {
     const d = parseDateInput(startInputValue);
     if (!d) return;
-    const [s, e] = value;
+    const [s, e] = pendingValue;
     if (e && d.getTime() > e.getTime()) {
-      onChange?.([d, d]);
+      setPendingValue([d, d]);
       setViewYear(d.getFullYear());
       setViewMonth(d.getMonth() + 1);
     } else {
-      onChange?.([d, e ?? d]);
+      setPendingValue([d, e ?? d]);
       setViewYear(d.getFullYear());
       setViewMonth(d.getMonth() + 1);
     }
-  }, [startInputValue, value, onChange]);
+  }, [startInputValue, pendingValue]);
 
-  /** 从结束日期输入框提交：解析并更新 value，仅改结束日期 */
+  /** 从结束日期输入框提交：解析并更新待确认范围，仅改结束日期 */
   const applyEndInput = useCallback(() => {
     const d = parseDateInput(endInputValue);
     if (!d) return;
-    const [s, e] = value;
+    const [s, e] = pendingValue;
     if (s && d.getTime() < s.getTime()) {
-      onChange?.([s, d]);
+      setPendingValue([s, d]);
       setViewYear(d.getFullYear());
       setViewMonth(d.getMonth() + 1);
     } else {
-      onChange?.([s ?? d, d]);
+      setPendingValue([s ?? d, d]);
       setViewYear(d.getFullYear());
       setViewMonth(d.getMonth() + 1);
     }
-  }, [endInputValue, value, onChange]);
+  }, [endInputValue, pendingValue]);
 
   /** 点击外部关闭年选择框 */
   useEffect(() => {
@@ -675,6 +680,27 @@ export function DatePicker(props: DatePickerProps) {
               </div>
             );
           })}
+        </div>
+
+        {/* 底部：取消、确定，仅确定后应用 */}
+        <div className="flex flex-row justify-end gap-2 pt-3 pb-1 border-t border-slate-100 mt-2">
+          <button
+            type="button"
+            onClick={() => {
+              setPendingValue([...value]);
+              onCancel?.();
+            }}
+            className="px-4 h-7 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange?.(pendingValue)}
+            className="px-4 h-7 text-sm font-medium text-white bg-primary border-0 rounded-lg hover:opacity-90 cursor-pointer"
+          >
+            确定
+          </button>
         </div>
       </div>
     </div>

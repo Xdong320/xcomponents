@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { DatePicker, type DateRange } from "../components/date-picker";
+import {
+  DatePicker,
+  RangeDatePicker,
+  type DateRange,
+  type Placement,
+} from "../components/date-picker";
 
 function formatRange(range: DateRange): string {
   const [s, e] = range;
@@ -10,8 +15,16 @@ function formatRange(range: DateRange): string {
   return `${f(s)} —— ${f(e)}`;
 }
 
+const PLACEMENTS: Placement[] = [
+  "bottomLeft",
+  "bottomRight",
+  "topLeft",
+  "topRight",
+];
+
 export function DatePickerDemo() {
   const [value, setValue] = useState<DateRange>([null, null]);
+  const [placement, setPlacement] = useState<Placement>("bottomLeft");
 
   return (
     <div style={{ padding: 24, fontFamily: '"Noto Sans SC", sans-serif' }}>
@@ -28,18 +41,71 @@ export function DatePickerDemo() {
       <p style={{ marginBottom: 16, fontSize: 14, color: "#45556C" }}>
         当前选中：{formatRange(value)}
       </p>
-      <DatePicker
-        value={value}
-        onChange={setValue}
-        // 示例：限制可选年份范围
-        // yearRange={[1970, 2050]}
-        // 示例：禁用今天之后的所有日期（仅可选今天及以前）
-        disabledDate={(date) => {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          return date.getTime() > today.getTime();
-        }}
-      />
+
+      <div style={{ marginBottom: 24 }}>
+        <h3 style={{ fontSize: 14, marginBottom: 8, color: "#45556C" }}>
+          RangeDatePicker（弹窗）
+        </h3>
+        <div
+          style={{
+            marginBottom: 12,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <label style={{ fontSize: 14, color: "#45556C" }}>placement：</label>
+          {PLACEMENTS.map((p) => (
+            <label
+              key={p}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="radio"
+                name="placement"
+                value={p}
+                checked={placement === p}
+                onChange={() => setPlacement(p)}
+              />
+              <span style={{ fontSize: 14 }}>{p}</span>
+            </label>
+          ))}
+        </div>
+        <RangeDatePicker
+          className="w-[600px]"
+          border={true}
+          placeholder={["Outlined Start", "Outlined End"]}
+          placement={placement}
+          value={value}
+          onChange={setValue}
+          disabledDate={(date) => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return date.getTime() > today.getTime();
+          }}
+        />
+      </div>
+
+      <div>
+        <h3 style={{ fontSize: 14, marginBottom: 8, color: "#45556C" }}>
+          内联 DatePicker
+        </h3>
+        <DatePicker
+          value={value}
+          onChange={setValue}
+          disabledDate={(date) => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return date.getTime() > today.getTime();
+          }}
+        />
+      </div>
     </div>
   );
 }
