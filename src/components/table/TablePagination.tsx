@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { PaginationRenderProps } from "./types";
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
@@ -98,10 +104,32 @@ export function TablePagination({
   );
 
   const [pageSizeOpen, setPageSizeOpen] = useState(false);
+  const [pageSizePlacement, setPageSizePlacement] = useState<"top" | "bottom">(
+    "bottom",
+  );
   const pageSizeRef = useRef<HTMLDivElement | null>(null);
+
+  const updatePlacement = useCallback(() => {
+    if (!pageSizeRef.current) return;
+    const rect = pageSizeRef.current.getBoundingClientRect();
+    const viewportHeight =
+      window.innerHeight || document.documentElement.clientHeight || 0;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    // 估算弹层高度：每项约 32px，高度上限做个兜底
+    const estimatedHeight = Math.min(pageSizeOptions.length * 32 + 16, 260);
+    if (spaceBelow >= estimatedHeight || spaceBelow >= spaceAbove) {
+      setPageSizePlacement("bottom");
+    } else {
+      setPageSizePlacement("top");
+    }
+  }, [pageSizeOptions.length]);
 
   useEffect(() => {
     if (!pageSizeOpen) return;
+
+    updatePlacement();
+
     const handleClick = (e: MouseEvent) => {
       if (!pageSizeRef.current) return;
       if (!pageSizeRef.current.contains(e.target as Node)) {
@@ -109,8 +137,22 @@ export function TablePagination({
       }
     };
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [pageSizeOpen]);
+    window.addEventListener("resize", updatePlacement);
+    window.addEventListener("scroll", updatePlacement, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      window.removeEventListener("resize", updatePlacement);
+      window.removeEventListener("scroll", updatePlacement, true);
+    };
+  }, [pageSizeOpen, updatePlacement]);
+
+  const handleTogglePageSize = () => {
+    if (!pageSizeOpen) {
+      // 先根据当前视口空间计算一次方向，避免初次渲染方向闪烁
+      updatePlacement();
+    }
+    setPageSizeOpen((v) => !v);
+  };
 
   if (typeof customRender === "function") {
     return (
@@ -177,7 +219,7 @@ export function TablePagination({
         <button
           type="button"
           className="inline-flex h-8 items-center rounded-lg border border-200 bg-0 px-3 text-sm font-medium text-600 transition-colors hover:bg-100"
-          onClick={() => setPageSizeOpen((v) => !v)}
+          onClick={handleTogglePageSize}
         >
           <span>{pageSize}条 / 页</span>
           <svg
@@ -201,7 +243,13 @@ export function TablePagination({
               className="fixed inset-0 z-10 pointer-events-none"
               aria-hidden
             />
-            <div className="absolute right-0 bottom-full z-20 mb-2 w-32 rounded-xl border border-200 bg-0 p-1 shadow-lg">
+            <div
+              className={`absolute right-0 z-20 w-32 rounded-xl border border-200 bg-0 p-1 shadow-lg ${
+                pageSizePlacement === "top"
+                  ? "bottom-full mb-2"
+                  : "top-full mt-2"
+              }`}
+            >
               {pageSizeOptions.map((n) => {
                 const active = n === pageSize;
                 return (
