@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import type { PaginationRenderProps } from "./types";
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
@@ -107,13 +108,45 @@ export function TablePagination({
   const [pageSizePlacement, setPageSizePlacement] = useState<"top" | "bottom">(
     "bottom",
   );
-  const pageSizeRef = useRef<HTMLDivElement | null>(null);
+  const pageSizeRef = useRef<HTMLElement | null>(null);
+  const pageSizeDropdownRef = useRef<HTMLDivElement | null>(null);
+  const [pageSizeAnchor, setPageSizeAnchor] = useState<{
+    left: number;
+    top: number;
+    bottom: number;
+    width: number;
+  } | null>(null);
 
   const updatePlacement = useCallback(() => {
     if (!pageSizeRef.current) return;
     const rect = pageSizeRef.current.getBoundingClientRect();
+
+    const viewportWidth =
+      window.innerWidth || document.documentElement.clientWidth || 0;
     const viewportHeight =
       window.innerHeight || document.documentElement.clientHeight || 0;
+
+    // 处理左右方向的可视范围，避免被视口左右裁剪
+    const dropdownWidth = 128; // w-32 = 8rem ≈ 128px
+    const horizontalMargin = 8;
+    let left = rect.left;
+    if (left + dropdownWidth + horizontalMargin > viewportWidth) {
+      left = Math.max(
+        horizontalMargin,
+        viewportWidth - dropdownWidth - horizontalMargin,
+      );
+    }
+    if (left < horizontalMargin) {
+      left = horizontalMargin;
+    }
+
+    setPageSizeAnchor({
+      left,
+      top: rect.top,
+      bottom: rect.bottom,
+      width: rect.width,
+    });
+
     const spaceBelow = viewportHeight - rect.bottom;
     const spaceAbove = rect.top;
     // 估算弹层高度：每项约 32px，高度上限做个兜底
@@ -131,8 +164,20 @@ export function TablePagination({
     updatePlacement();
 
     const handleClick = (e: MouseEvent) => {
-      if (!pageSizeRef.current) return;
-      if (!pageSizeRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const triggerEl = pageSizeRef.current;
+      const dropdownEl = pageSizeDropdownRef.current;
+      if (
+        triggerEl &&
+        triggerEl.contains(target)
+      ) {
+        return;
+      }
+      if (dropdownEl && dropdownEl.contains(target)) {
+        return;
+      }
+      if (!triggerEl && !dropdownEl) return;
+      {
         setPageSizeOpen(false);
       }
     };
@@ -212,12 +257,10 @@ export function TablePagination({
           <ArrowRightIcon />
         </button>
       </div>
-      <div
-        className="relative flex flex-1 items-center justify-end"
-        ref={pageSizeRef}
-      >
+      <div className="relative flex flex-1 items-center justify-end">
         <button
           type="button"
+          ref={pageSizeRef}
           className="inline-flex h-8 items-center rounded-lg border border-200 bg-0 px-3 text-sm font-medium text-600 transition-colors hover:bg-100"
           onClick={handleTogglePageSize}
         >
@@ -237,48 +280,56 @@ export function TablePagination({
             />
           </svg>
         </button>
-        {pageSizeOpen && (
+      </div>
+      {pageSizeOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
           <>
             <div
               className="fixed inset-0 z-10 pointer-events-none"
               aria-hidden
             />
-            <div
-              className={`absolute right-0 z-20 w-32 rounded-xl border border-200 bg-0 p-1 shadow-lg ${
-                pageSizePlacement === "top"
-                  ? "bottom-full mb-2"
-                  : "top-full mt-2"
-              }`}
-            >
-              {pageSizeOptions.map((n) => {
-                const active = n === pageSize;
-                return (
-                  <button
-                    key={n}
-                    type="button"
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 mt-1 text-left text-sm ${
-                      active
-                        ? "bg-100 text-950"
-                        : "text-600 hover:bg-50 hover:text-950"
-                    }`}
-                    onClick={() => {
-                      setPageSizeOpen(false);
-                      if (n !== pageSize) {
-                        onChange(1, n);
-                      }
-                    }}
-                  >
-                    <span>{n}条 / 页</span>
-                    {/* {active && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    )} */}
-                  </button>
-                );
-              })}
-            </div>
-          </>
+            {pageSizeAnchor && (
+              <div
+                ref={pageSizeDropdownRef}
+                className="fixed z-20 w-32 rounded-xl border border-200 bg-0 p-1 shadow-lg"
+                style={{
+                  left: pageSizeAnchor.left,
+                  top:
+                    pageSizePlacement === "top"
+                      ? pageSizeAnchor.top - 8
+                      : pageSizeAnchor.bottom + 8,
+                  transform:
+                    pageSizePlacement === "top" ? "translateY(-100%)" : "none",
+                }}
+              >
+                {pageSizeOptions.map((n) => {
+                  const active = n === pageSize;
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      className={`mt-1 flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-sm ${
+                        active
+                          ? "bg-100 text-950"
+                          : "text-600 hover:bg-50 hover:text-950"
+                      }`}
+                      onClick={() => {
+                        setPageSizeOpen(false);
+                        if (n !== pageSize) {
+                          onChange(1, n);
+                        }
+                      }}
+                    >
+                      <span>{n}条 / 页</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </>,
+          document.body,
         )}
-      </div>
     </div>
   );
 }
