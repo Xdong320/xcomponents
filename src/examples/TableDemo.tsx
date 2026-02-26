@@ -310,6 +310,7 @@ export function TableDemo() {
   );
 
   const handleFilterChange = useCallback((conditions: FilterCondition[]) => {
+    console.log("FilterBuilder onChange", conditions);
     setFilterConditions(conditions);
     setPaginationCurrent(1);
   }, []);

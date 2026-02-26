@@ -14,7 +14,7 @@
 | `ColumnSettings` | 列显示/隐藏设置 |
 | `CommonTableProps`, `CommonColumnType`, `PaginationConfig`, `PaginationRenderProps`, `RowSelection`, `SorterResult`, `SortOrder`, `TableFilters`, `TableLocale` | 表格相关类型 |
 | `TablePaginationProps` | 分页组件 Props（`current`, `pageSize`, `total`, `totalPages`, `onChange`, `customRender?`, `pageSizeOptions?`） |
-| `FilterBuilderProps`, `FilterCondition`, `FilterConditionDateValue`, `FilterFieldMeta`, `FilterFieldType`, `SavedFilterPreset` | 筛选相关类型 |
+| `FilterBuilderProps`, `FilterCondition`, `FilterConditionDateValue`, `FilterConditionRangeValue`, `FilterFieldMeta`, `FilterFieldType`, `SavedFilterPreset` | 筛选相关类型 |
 | `ColumnSettingsProps`, `Key` | 列设置与通用类型 |
 
 ---
@@ -128,11 +128,20 @@ const columns: CommonColumnType<Record>[] = [
 
 ### 字段类型与弹窗
 
-- **date**：before/after + 日期（MM/DD/YYYY）+ 时间（HH:mm）。
-- **number**：大于、小于、等于等 + 数字输入。
-- **text**：包含、等于、不等于等 + 文本输入。
-- **select**：单选选项；**boolean**：是/否。
-- 类型可通过 `FilterFieldMeta.type` 扩展。
+- **date**：`when`（before/after）+ 日期（MM/DD/YYYY）+ 时间（HH:mm），value 类型为 `FilterConditionDateValue`。
+- **number**：
+  - 默认：大于、小于、等于等 + 单值数字输入。
+  - 范围：在 `FilterFieldMeta` 上设置 `range: true` 时，弹窗展示「至少 / 至多」两个输入框，条件 value 为 `FilterConditionRangeValue`（`{ min?: number; max?: number }`），支持只填一端。
+- **text**：包含、等于、不等于、开头是、结尾是等 + 文本输入。
+- **select**：单选选项；**boolean**：全部 / 是 / 否。
+- 类型通过 `FilterFieldMeta.type` 声明；操作符默认由内置规则生成，也可通过 `FilterFieldMeta.operators` 覆盖。
+
+### 操作符与展示文案
+
+- `FilterFieldMeta.operators?: string[]`：**真实操作符值列表**，`FilterCondition.operator` 会直接使用这里的原始字符串，不做转换，方便与后端协议对齐（如 `>`, `<`, `>=`, `=`, `contains` 等）。
+- `FilterFieldMeta.operatorsText?: Record<string, string>`：**仅控制下拉中的展示文案**：
+  - 下拉里会用 `operatorsText[op] ?? op` 作为展示文字。
+  - 条件对象里仍然保存原始 `op`，不会被替换。
 
 ### 保存与回显
 
@@ -186,7 +195,7 @@ const paginatedData = useMemo(() => {
 
 ## ColumnSettings
 
-列显示/隐藏：勾选列、全选/清空，用于 `CommonTable` 的 `columnSettingsProps`。
+列显示/隐藏：勾选列、全选/清空，用于 `CommonTable` 的 `columnSettingsProps`。内部使用与筛选组件统一的样式风格：每一行是一个可点击区域，左侧为自定义勾选图标（teal 色对勾），右侧为列标题，点击整行或图标都会切换可见状态。
 
 ### Props
 
@@ -207,6 +216,7 @@ const paginatedData = useMemo(() => {
 - **TableLocale**：`emptyText?`, `loadingText?`
 - **FilterCondition**：`field`, `label`, `type`, `operator`, `value`
 - **FilterConditionDateValue**：`when?`, `date?`, `time?`（date 类型 value）
+- **FilterConditionRangeValue**：`min?`, `max?`（number 范围类型 value）
 - **SavedFilterPreset**：`id`, `name`, `conditions`
 
 ---

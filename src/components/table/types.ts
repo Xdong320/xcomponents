@@ -18,6 +18,7 @@ export interface FilterFieldMeta {
   options?: Array<{ label: string; value: string | number | boolean }>;
   /** 为 true 时，该字段使用范围筛选（最小值～最大值），仅对 number 类型生效 */
   range?: boolean;
+  operatorsText?: Record<string, string>; // 仅影响展示
 }
 
 export interface FilterCondition {

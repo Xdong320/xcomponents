@@ -43,17 +43,18 @@ function savePresets(id: string, presets: SavedFilterPreset[]) {
 function createEmptyCondition(fieldMeta: FilterFieldMeta): FilterCondition {
   const ops = getOperatorsForType(fieldMeta.type, fieldMeta.range);
   const isRangeNumber = fieldMeta.type === "number" && fieldMeta.range === true;
+  const isDate = fieldMeta.type === "date" || fieldMeta.type === "dateRange";
+  const defaultWhen = "after";
   return {
     field: fieldMeta.field,
     label: fieldMeta.label,
     type: fieldMeta.type,
-    operator: isRangeNumber ? "范围" : (ops[0] ?? "="),
-    value:
-      fieldMeta.type === "date" || fieldMeta.type === "dateRange"
-        ? { when: "after", date: "", time: "00:00" }
-        : isRangeNumber
-          ? { min: undefined, max: undefined }
-          : undefined,
+    operator: isRangeNumber ? "范围" : isDate ? defaultWhen : (ops[0] ?? "="),
+    value: isDate
+      ? { when: defaultWhen, date: "", time: "00:00" }
+      : isRangeNumber
+        ? { min: undefined, max: undefined }
+        : undefined,
   };
 }
 
@@ -225,6 +226,7 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
   }, [id, conditions, presets, saveName]);
 
   const tagsWrapClass = "flex min-w-0 flex-1 flex-wrap items-center gap-2";
+  const hasConditions = conditions.length > 0;
 
   if (variant !== "bar") {
     return (
@@ -345,7 +347,6 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                       <div className="mb-1 px-3 py-1 text-sm font-medium text-600">
                         已保存的筛选
                       </div>
-                      <div className="my-1 border-t border-200" />
                     </>
                   )}
                   {presets.map((p) => (
@@ -382,6 +383,10 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
                     </div>
                   ))}
 
+                  {presets.length > 0 && (
+                    <div className="my-1 border-t border-200 mx-3" />
+                  )}
+
                   <div className="mb-1 px-3 py-1 text-sm font-medium text-600">
                     表格字段
                   </div>
@@ -403,8 +408,16 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            onClick={() => setSaveModalOpen(true)}
-            className="flex h-6 w-6 items-center justify-center rounded-lg border border-200 bg-0 text-600 shadow-sm hover:bg-100 hover:text-950"
+            onClick={() => {
+              if (!hasConditions) return;
+              setSaveModalOpen(true);
+            }}
+            disabled={!hasConditions}
+            className={`flex h-6 w-6 items-center justify-center rounded-lg border border-200 bg-0 text-600 shadow-sm ${
+              hasConditions
+                ? "hover:bg-100 hover:text-950"
+                : "cursor-not-allowed opacity-40"
+            }`}
             aria-label="保存筛选"
             title="保存当前筛选条件"
           >
@@ -424,10 +437,16 @@ export const FilterBuilder: React.FC<FilterBuilderInternalProps> = ({
           <button
             type="button"
             onClick={() => {
+              if (!hasConditions) return;
               setConditions([]);
               onChange?.([]);
             }}
-            className="flex h-6 w-6 items-center justify-center rounded-lg border border-200 bg-0 text-600 shadow-sm hover:bg-100 hover:text-950"
+            disabled={!hasConditions}
+            className={`flex h-6 w-6 items-center justify-center rounded-lg border border-200 bg-0 text-600 shadow-sm ${
+              hasConditions
+                ? "hover:bg-100 hover:text-950"
+                : "cursor-not-allowed opacity-40"
+            }`}
             aria-label="清空筛选"
             title="清空所有已选筛选条件"
           >
@@ -581,14 +600,13 @@ function ConditionDialog({
               </label>
               <ConditionSelect
                 value={dateValue.when ?? "after"}
-                onChange={(val) =>
+                onChange={(val) => {
+                  const whenVal = val as "before" | "after";
                   onUpdate({
-                    value: {
-                      ...dateValue,
-                      when: val as "before" | "after",
-                    },
-                  })
-                }
+                    operator: whenVal,
+                    value: { ...dateValue, when: whenVal },
+                  });
+                }}
                 options={[
                   { value: "before", label: "before" },
                   { value: "after", label: "after" },
