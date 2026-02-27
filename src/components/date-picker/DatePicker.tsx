@@ -40,9 +40,13 @@ const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 const PRESETS: { key: PresetKey; label: string }[] = [
   { key: "custom", label: "自定义" },
   { key: "today", label: "今天" },
+  { key: "last24Hours", label: "过去24小时" },
   { key: "yesterday", label: "昨天" },
+  { key: "thisMonth", label: "本月" },
   { key: "last7", label: "最近7天" },
-  { key: "last30", label: "最近30天" },
+  { key: "last30", label: "过去30天" },
+  { key: "thisYear", label: "今年" },
+  { key: "thisWeek", label: "本周（周日-今天）" },
   { key: "lastN", label: "过去【N】天（含今天）" },
   { key: "lastNExcludeToday", label: "过去【N】天（截止昨天）" },
 ];
@@ -122,7 +126,9 @@ export function DatePicker(props: DatePickerProps) {
   const [endInputValue, setEndInputValue] = useState("");
   /** 年选择框是否展开 */
   const [yearPickerOpen, setYearPickerOpen] = useState(false);
-  const yearPickerRef = useRef<HTMLDivElement>(null);
+  /** 月选择框是否展开 */
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   // 从 value 同步到顶部输入框
   useEffect(() => {
@@ -130,32 +136,50 @@ export function DatePicker(props: DatePickerProps) {
     setEndInputValue(end ? formatDateForInput(end) : "");
   }, [start, end]);
 
-  const handlePreset = useCallback((key: PresetKey) => {
-    if (key === "custom") return;
-    if (key === "lastN" || key === "lastNExcludeToday") return; // 由下方 N 输入框应用
-    const [s, e] = getPresetRange(key);
-    setPendingValue([s, e]);
-    setViewYear(s.getFullYear());
-    setViewMonth(s.getMonth() + 1);
-  }, []);
+  const handlePreset = useCallback(
+    (key: PresetKey) => {
+      if (key === "custom") return;
+      if (key === "lastN" || key === "lastNExcludeToday") return; // 由下方 N 输入框应用
+      const [s, e] = getPresetRange(key);
+      const nextRange: DateRange = [s, e];
+      setPendingValue(nextRange);
+      setViewYear(s.getFullYear());
+      setViewMonth(s.getMonth() + 1);
+      // 选择左侧快捷 PRESETS 后直接应用
+      onChange?.(nextRange);
+    },
+    [onChange],
+  );
 
-  const handlePastNApply = useCallback((n: number) => {
-    const num = Math.max(1, Math.floor(n));
-    const [s, e] = getLastNDaysRange(num);
-    setPendingValue([s, e]);
-    setViewYear(s.getFullYear());
-    setViewMonth(s.getMonth() + 1);
-    setPastNInput(String(num));
-  }, []);
+  const handlePastNApply = useCallback(
+    (n: number) => {
+      const num = Math.max(1, Math.floor(n));
+      const [s, e] = getLastNDaysRange(num);
+      const nextRange: DateRange = [s, e];
+      setPendingValue(nextRange);
+      setViewYear(s.getFullYear());
+      setViewMonth(s.getMonth() + 1);
+      setPastNInput(String(num));
+      // 选择左侧“过去 N 天（含今天）”后直接应用
+      onChange?.(nextRange);
+    },
+    [onChange],
+  );
 
-  const handlePastNExcludeTodayApply = useCallback((n: number) => {
-    const num = Math.max(1, Math.floor(n));
-    const [s, e] = getLastNDaysRangeExcludeToday(num);
-    setPendingValue([s, e]);
-    setViewYear(s.getFullYear());
-    setViewMonth(s.getMonth() + 1);
-    setPastNExcludeTodayInput(String(num));
-  }, []);
+  const handlePastNExcludeTodayApply = useCallback(
+    (n: number) => {
+      const num = Math.max(1, Math.floor(n));
+      const [s, e] = getLastNDaysRangeExcludeToday(num);
+      const nextRange: DateRange = [s, e];
+      setPendingValue(nextRange);
+      setViewYear(s.getFullYear());
+      setViewMonth(s.getMonth() + 1);
+      setPastNExcludeTodayInput(String(num));
+      // 选择左侧“过去 N 天（截止昨天）”后直接应用
+      onChange?.(nextRange);
+    },
+    [onChange],
+  );
 
   const handlePrevMonth = useCallback(() => {
     if (viewMonth <= 1) {
@@ -224,25 +248,23 @@ export function DatePicker(props: DatePickerProps) {
     }
   }, [endInputValue, pendingValue]);
 
-  /** 点击外部关闭年选择框 */
+  /** 点击外部关闭年/月选择框 */
   useEffect(() => {
-    if (!yearPickerOpen) return;
+    if (!yearPickerOpen && !monthPickerOpen) return;
     const onDocClick = (e: MouseEvent) => {
-      if (
-        yearPickerRef.current &&
-        !yearPickerRef.current.contains(e.target as Node)
-      ) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
         setYearPickerOpen(false);
+        setMonthPickerOpen(false);
       }
     };
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
-  }, [yearPickerOpen]);
+  }, [yearPickerOpen, monthPickerOpen]);
 
   // 年份弹窗打开时，将当前选择年份滚动到可视区域中间
   useEffect(() => {
-    if (!yearPickerOpen || !yearPickerRef.current) return;
-    const container = yearPickerRef.current.querySelector(
+    if (!yearPickerOpen || !pickerRef.current) return;
+    const container = pickerRef.current.querySelector(
       ".year-picker-scroll",
     ) as HTMLDivElement | null;
     if (!container) return;
@@ -262,6 +284,12 @@ export function DatePicker(props: DatePickerProps) {
     for (let y = startYear; y <= endYear; y++) list.push(y);
     return list;
   }, [yearRange]);
+
+  const monthOptions = useMemo(() => {
+    const list: number[] = [];
+    for (let m = 1; m <= 12; m++) list.push(m);
+    return list;
+  }, []);
 
   const weeks = getCalendarWeeks(viewYear, viewMonth);
   const startOffset = getMonthStartWeekday(viewYear, viewMonth);
@@ -351,7 +379,7 @@ export function DatePicker(props: DatePickerProps) {
       className={`flex flex-row w-fit rounded-2xl shadow-md overflow-hidden ${className ?? ""}`.trim()}
     >
       {/* Time Filter - 左侧快捷周期：仅选中项有 bg-50；默认自定义，过去N天可输入 N */}
-      <div className="flex flex-col gap-2 py-5 px-4 pt-5 pb-0.5 w-60 min-h-[364px] bg-white border-r border-slate-200">
+      <div className="flex flex-col gap-2 py-5 px-4 pt-5 pb-0.5 w-60 min-h-[420px] max-h-[505px] overflow-y-auto bg-white border-r border-slate-200">
         {PRESETS.map(({ key, label }) => {
           if (key === "lastN") {
             const isActive = activePreset === "lastN";
@@ -530,7 +558,7 @@ export function DatePicker(props: DatePickerProps) {
         {/* 年月切换：点击弹出年选择框(1970+)，左右箭头切换月 */}
         <div
           className="relative flex flex-row justify-between items-center self-stretch gap-2.5 px-1.5 py-1.5 rounded-xl bg-50"
-          ref={yearPickerRef}
+          ref={pickerRef}
         >
           <button
             type="button"
@@ -539,24 +567,52 @@ export function DatePicker(props: DatePickerProps) {
           >
             <ArrowLeft />
           </button>
-          <button
-            type="button"
-            onClick={() => setYearPickerOpen((v) => !v)}
-            className="flex items-center justify-center gap-1 font-medium text-sm text-slate-600 cursor-pointer hover:text-slate-900 min-w-[100px]"
-          >
-            <span>
-              {viewYear}年 {viewMonth}月
-            </span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
+          <div className="flex items-center justify-center gap-4 font-medium text-sm text-slate-600 min-w-[140px]">
+            <button
+              type="button"
+              onClick={() =>
+                setYearPickerOpen((v) => {
+                  const next = !v;
+                  if (next) setMonthPickerOpen(false);
+                  return next;
+                })
+              }
+              className="flex items-center justify-center gap-1 cursor-pointer hover:text-slate-900"
             >
-              <path d="M10 12.25L5.5 7.75H14.5L10 12.25Z" fill="#45556C" />
-            </svg>
-          </button>
+              <span>{viewYear}年</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+              >
+                <path d="M10 12.25L5.5 7.75H14.5L10 12.25Z" fill="#45556C" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setMonthPickerOpen((v) => {
+                  const next = !v;
+                  if (next) setYearPickerOpen(false);
+                  return next;
+                })
+              }
+              className="flex items-center justify-center gap-1 cursor-pointer hover:text-slate-900"
+            >
+              <span>{viewMonth}月</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+              >
+                <path d="M10 12.25L5.5 7.75H14.5L10 12.25Z" fill="#45556C" />
+              </svg>
+            </button>
+          </div>
           <button
             type="button"
             onClick={handleNextMonth}
@@ -587,6 +643,34 @@ export function DatePicker(props: DatePickerProps) {
                       }`}
                     >
                       {y}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          {monthPickerOpen && (
+            <div className="absolute left-1/2 top-full mt-1 -translate-x-1/2 z-20 w-40 max-h-56 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
+              <div className="max-h-56 overflow-y-auto pb-2 px-2">
+                <div className="sticky top-0 z-10 text-xs text-slate-400 px-2 py-1 bg-white">
+                  选择月份
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                  {monthOptions.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => {
+                        setViewMonth(m);
+                        setMonthPickerOpen(false);
+                      }}
+                      className={`py-1.5 text-sm rounded-lg ${
+                        viewMonth === m
+                          ? "bg-primary text-white"
+                          : "text-slate-600 hover:bg-50"
+                      }`}
+                    >
+                      {m}月
                     </button>
                   ))}
                 </div>

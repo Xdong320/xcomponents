@@ -1,8 +1,19 @@
 /** 日期范围 [开始, 结束]，可为单日或区间 */
 export type DateRange = [Date | null, Date | null];
 
-/** 快捷周期类型（含自定义、过去N天含今天、过去N天截止昨天） */
-export type PresetKey = 'custom' | 'today' | 'yesterday' | 'last7' | 'last30' | 'lastN' | 'lastNExcludeToday';
+/** 快捷周期类型（含自定义、过去N天含今天、过去N天截止昨天等） */
+export type PresetKey =
+  | 'custom'
+  | 'today'
+  | 'last24Hours'
+  | 'yesterday'
+  | 'thisMonth'
+  | 'last7'
+  | 'last30'
+  | 'thisYear'
+  | 'thisWeek'
+  | 'lastN'
+  | 'lastNExcludeToday';
 
 export interface DatePickerProps {
   /** 当前选中的日期范围 */

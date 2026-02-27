@@ -129,7 +129,18 @@ export function getLastNDaysExcludeTodayFromRange(
 
 /** 快捷周期：返回 [start, end]。lastN / lastNExcludeToday 时需传入 n（大于 0 的整数） */
 export function getPresetRange(
-  key: 'custom' | 'today' | 'yesterday' | 'last7' | 'last30' | 'lastN' | 'lastNExcludeToday',
+  key:
+    | 'custom'
+    | 'today'
+    | 'last24Hours'
+    | 'yesterday'
+    | 'thisMonth'
+    | 'last7'
+    | 'last30'
+    | 'thisYear'
+    | 'thisWeek'
+    | 'lastN'
+    | 'lastNExcludeToday',
   n?: number,
 ): [Date, Date] {
   if (key === 'custom') {
@@ -148,10 +159,20 @@ export function getPresetRange(
       start = new Date(today);
       end = new Date(today);
       break;
+    case 'last24Hours': {
+      end = new Date(today);
+      start = new Date(today);
+      start.setDate(start.getDate() - 1);
+      break;
+    }
     case 'yesterday':
       start = new Date(today);
       start.setDate(start.getDate() - 1);
       end = new Date(start);
+      break;
+    case 'thisMonth':
+      end = new Date(today);
+      start = new Date(today.getFullYear(), today.getMonth(), 1);
       break;
     case 'last7':
       end = new Date(today);
@@ -163,6 +184,17 @@ export function getPresetRange(
       start = new Date(today);
       start.setDate(start.getDate() - 29);
       break;
+    case 'thisYear':
+      end = new Date(today);
+      start = new Date(today.getFullYear(), 0, 1);
+      break;
+    case 'thisWeek': {
+      end = new Date(today);
+      const weekDay = today.getDay(); // 0=Sun,1=Mon,...
+      start = new Date(today);
+      start.setDate(start.getDate() - weekDay); // 本周周日
+      break;
+    }
     default:
       start = end = new Date(today);
   }

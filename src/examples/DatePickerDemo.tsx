@@ -92,7 +92,7 @@ export function DatePickerDemo() {
         />
       </div>
 
-      <div>
+      {/* <div>
         <h3 style={{ fontSize: 14, marginBottom: 8, color: "#45556C" }}>
           内联 DatePicker
         </h3>
@@ -105,7 +105,7 @@ export function DatePickerDemo() {
             return date.getTime() > today.getTime();
           }}
         />
-      </div>
+      </div> */}
     </div>
   );
 }

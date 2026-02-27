@@ -8,14 +8,14 @@ const root = document.getElementById("root");
 if (root) {
   createRoot(root).render(
     <React.StrictMode>
-      <div className="flex flex-row gap-4">
+      {/* <div className="flex flex-row gap-4">
         <div className="w-full h-200 bg-red-500">1</div>
         <div>
           <TableDemo />
         </div>
-      </div>
+      </div> */}
 
-      {/* <DatePickerDemo /> */}
+      <DatePickerDemo />
     </React.StrictMode>,
   );
 }
