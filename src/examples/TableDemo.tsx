@@ -5,7 +5,6 @@ import React, {
   useState,
   useRef,
 } from "react";
-import { createPortal } from "react-dom";
 import {
   CommonTable,
   FilterBuilder,
@@ -164,18 +163,23 @@ const TitleComponent = () => {
         会话ID
       </div>
       {addOpen && anchor && typeof document !== "undefined" && (
-        <>
-          <div
-            className="fixed z-[100] h-[300px] w-56 overflow-auto rounded-xl border border-gray-300 bg-gray-500"
-            style={{
-              left: anchor.left,
-              top: anchor.top,
-            }}
+        <div
+          className="fixed z-[100] w-56 rounded-xl border border-200 bg-0 p-3 shadow-lg"
+          style={{ left: anchor.left, top: anchor.top }}
+          role="dialog"
+          aria-label="列说明"
+        >
+          <div className="mb-2 text-sm text-600">会话ID</div>
+          <p className="text-xs text-500">点击表头可展开筛选或排序。</p>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="mt-2 text-sm text-600 hover:text-950"
+            aria-label="关闭"
           >
-            test弹窗背遮挡问题
-            <div onClick={handleClose}>X</div>
-          </div>
-        </>
+            关闭
+          </button>
+        </div>
       )}
     </>
   );
@@ -199,6 +203,10 @@ const columns: CommonColumnType<SessionRecord>[] = [
           className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-200 bg-100 text-600 hover:bg-0 hover:text-950"
           title="复制"
           aria-label="复制"
+          onClick={(e) => {
+            e.stopPropagation();
+            void navigator.clipboard?.writeText(val).catch(() => {});
+          }}
         >
           <svg
             width="12"
@@ -358,20 +366,25 @@ export function TableDemo() {
           const num = Number(recordVal);
           const v = Number(c.value);
           if (Number.isNaN(v)) return true;
-          switch (c.operator) {
-            case ">":
-              return num > v;
-            case "<":
-              return num < v;
-            case ">=":
-              return num >= v;
-            case "<=":
-              return num <= v;
-            case "等于":
-              return num === v;
-            default:
-              return true;
-          }
+          // 兼容 FilterBuilder 默认中文 operator 与自定义符号 operator
+          const opMap: Record<
+            string,
+            (a: number, b: number) => boolean
+          > = {
+            ">": (a, b) => a > b,
+            大于: (a, b) => a > b,
+            "<": (a, b) => a < b,
+            小于: (a, b) => a < b,
+            ">=": (a, b) => a >= b,
+            大于等于: (a, b) => a >= b,
+            "<=": (a, b) => a <= b,
+            小于等于: (a, b) => a <= b,
+            "=": (a, b) => a === b,
+            等于: (a, b) => a === b,
+          };
+          const fn = opMap[c.operator];
+          if (fn) return fn(num, v);
+          return true;
         }
         if (c.type === "text") {
           const s = String(recordVal ?? "");

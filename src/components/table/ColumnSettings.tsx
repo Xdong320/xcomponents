@@ -99,7 +99,11 @@ export function ColumnSettings<T = any>({
                   </svg>
                 )}
               </span>
-              <span className="truncate">{col.title as any}</span>
+              <span className="truncate">
+                {typeof col.title === "string"
+                  ? col.title
+                  : String(col.key ?? col.dataIndex ?? "列")}
+              </span>
             </button>
           );
         })}

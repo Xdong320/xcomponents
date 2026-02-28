@@ -656,6 +656,8 @@ export function CommonTable<T extends Record<string, any> = any>({
                 type="button"
                 onClick={() => setColumnSettingsOpen((v) => !v)}
                 className="flex items-center gap-1 rounded-xl border border-200 bg-0 px-2.5 py-2 text-sm font-medium text-600 hover:bg-100"
+                aria-expanded={columnSettingsOpen}
+                aria-haspopup="true"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -885,7 +887,13 @@ export function CommonTable<T extends Record<string, any> = any>({
                             );
                           }}
                           className="ml-0.5 flex flex-col items-center justify-center gap-1 rounded p-0.5 text-600 hover:bg-100 hover:text-950"
-                          title="排序"
+                          title={
+                            currentOrder === null
+                              ? "点击升序"
+                              : currentOrder === "ascend"
+                                ? "点击降序"
+                                : "取消排序"
+                          }
                         >
                           <span
                             className={
