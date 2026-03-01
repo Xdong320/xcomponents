@@ -3,6 +3,7 @@ export { CommonTable, CommonTable as Table } from './CommonTable';
 export { FilterBuilder } from './FilterBuilder';
 export { ColumnSettings } from './ColumnSettings';
 export { TablePagination } from './TablePagination';
+export { Tooltip } from './Tooltip';
 export type {
   CommonTableProps,
   CommonColumnType,

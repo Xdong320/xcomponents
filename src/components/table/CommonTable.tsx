@@ -9,6 +9,7 @@ import React, {
 import { createPortal } from "react-dom";
 import { ColumnSettings } from "./ColumnSettings";
 import { TablePagination } from "./TablePagination";
+import { Tooltip } from "./Tooltip";
 import type {
   CommonColumnType,
   CommonTableProps,
@@ -773,17 +774,61 @@ export function CommonTable<T extends Record<string, any> = any>({
                         : {}),
                   }}
                 >
-                  <input
-                    type="checkbox"
-                    checked={
-                      displayData.length > 0 &&
-                      displayData.every((r) =>
-                        selectedRowKeys.includes(getRowKey(r)),
+                  <button
+                    type="button"
+                    onClick={() =>
+                      toggleAllRowsOnPage(
+                        !(
+                          displayData.length > 0 &&
+                          displayData.every((r) =>
+                            selectedRowKeys.includes(getRowKey(r)),
+                          )
+                        ),
                       )
                     }
-                    onChange={(e) => toggleAllRowsOnPage(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-200 text-primary"
-                  />
+                    className="flex h-4 w-4 items-center justify-center rounded border-0 bg-transparent p-0"
+                    aria-label="全选当前页"
+                  >
+                    <span
+                      className={`flex h-4 w-4 items-center justify-center rounded border border-200 text-white ${
+                        displayData.length > 0 &&
+                        displayData.every((r) =>
+                          selectedRowKeys.includes(getRowKey(r)),
+                        )
+                          ? "bg-primary"
+                          : "bg-0"
+                      }`}
+                      aria-hidden
+                    >
+                      {displayData.length > 0 &&
+                        displayData.every((r) =>
+                          selectedRowKeys.includes(getRowKey(r)),
+                        ) && (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                          >
+                            <rect
+                              x="2"
+                              y="2"
+                              width="16"
+                              height="16"
+                              rx="4"
+                              fill="#7F58EA"
+                            />
+                            <path
+                              fillRule="evenodd"
+                              clipRule="evenodd"
+                              d="M14.5304 8.03039L9.00006 13.5607L5.46973 10.0304L6.53039 8.96973L9.00006 11.4394L13.4697 6.96973L14.5304 8.03039Z"
+                              fill="white"
+                            />
+                          </svg>
+                        )}
+                    </span>
+                  </button>
                 </th>
               )}
               {rowSelectionProp && rowSelectionProp.type === "radio" && (
@@ -872,21 +917,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                         {col.title}
                       </span>
                       {hasSorter && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const next: SortOrder =
-                              currentOrder === null
-                                ? "ascend"
-                                : currentOrder === "ascend"
-                                  ? "descend"
-                                  : null;
-                            handleSorterChange(
-                              (col.dataIndex as string) ?? String(key),
-                              next,
-                            );
-                          }}
-                          className="ml-0.5 flex flex-col items-center justify-center gap-1 rounded p-0.5 text-600 hover:bg-100 hover:text-950"
+                        <Tooltip
                           title={
                             currentOrder === null
                               ? "点击升序"
@@ -895,63 +926,80 @@ export function CommonTable<T extends Record<string, any> = any>({
                                 : "取消排序"
                           }
                         >
-                          <span
-                            className={
-                              currentOrder === "ascend"
-                                ? "opacity-100"
-                                : "opacity-40"
-                            }
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next: SortOrder =
+                                currentOrder === null
+                                  ? "ascend"
+                                  : currentOrder === "ascend"
+                                    ? "descend"
+                                    : null;
+                              handleSorterChange(
+                                (col.dataIndex as string) ?? String(key),
+                                next,
+                              );
+                            }}
+                            className="ml-0.5 flex flex-col items-center justify-center gap-1 rounded p-0.5 text-600 hover:bg-100 hover:text-950"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="9"
-                              height="5"
-                              viewBox="0 0 9 5"
-                              fill="none"
-                              className="block"
+                            <span
+                              className={
+                                currentOrder === "ascend"
+                                  ? "opacity-100"
+                                  : "opacity-40"
+                              }
                             >
-                              <path
-                                d="M4.5 0L9 4.5H0L4.5 0Z"
-                                fill="currentColor"
-                              />
-                            </svg>
-                          </span>
-                          <span
-                            className={
-                              currentOrder === "descend"
-                                ? "opacity-100"
-                                : "opacity-40"
-                            }
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="9"
-                              height="5"
-                              viewBox="0 0 9 5"
-                              fill="none"
-                              className="block"
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="9"
+                                height="5"
+                                viewBox="0 0 9 5"
+                                fill="none"
+                                className="block"
+                              >
+                                <path
+                                  d="M4.5 0L9 4.5H0L4.5 0Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            </span>
+                            <span
+                              className={
+                                currentOrder === "descend"
+                                  ? "opacity-100"
+                                  : "opacity-40"
+                              }
                             >
-                              <path
-                                d="M4.5 4.5L0 0H9L4.5 4.5Z"
-                                fill="currentColor"
-                              />
-                            </svg>
-                          </span>
-                        </button>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="9"
+                                height="5"
+                                viewBox="0 0 9 5"
+                                fill="none"
+                                className="block"
+                              >
+                                <path
+                                  d="M4.5 4.5L0 0H9L4.5 4.5Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            </span>
+                          </button>
+                        </Tooltip>
                       )}
                       {hasFilter && (
                         <div className="relative">
-                          <button
-                            ref={filterOpen ? filterTriggerRef : undefined}
-                            type="button"
-                            onClick={() =>
-                              setFilterDropdownOpen(
-                                filterOpen ? null : String(key),
-                              )
-                            }
-                            className="rounded p-0.5 text-600 hover:bg-100 hover:text-950"
-                            title="筛选"
-                          >
+                          <Tooltip title="筛选">
+                            <button
+                              ref={filterOpen ? filterTriggerRef : undefined}
+                              type="button"
+                              onClick={() =>
+                                setFilterDropdownOpen(
+                                  filterOpen ? null : String(key),
+                                )
+                              }
+                              className="rounded p-0.5 text-600 hover:bg-100 hover:text-950"
+                            >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               width="20"
@@ -966,6 +1014,7 @@ export function CommonTable<T extends Record<string, any> = any>({
                               />
                             </svg>
                           </button>
+                          </Tooltip>
                           {filterOpen &&
                             filterDropdownRect &&
                             typeof document !== "undefined" &&
@@ -989,50 +1038,77 @@ export function CommonTable<T extends Record<string, any> = any>({
                                     const current = filters[key] ?? [];
                                     const selected = current.includes(f.value);
                                     return (
-                                      <label
+                                      <button
                                         key={String(f.value)}
-                                        className="flex cursor-pointer items-center gap-2 py-1 text-sm text-950"
-                                        onClick={
-                                          !filterMultiple && selected
-                                            ? () =>
-                                                handleFilterChange(key, null)
-                                            : undefined
-                                        }
+                                        type="button"
+                                        onClick={() => {
+                                          if (filterMultiple) {
+                                            const next = selected
+                                              ? current.filter(
+                                                  (v) => v !== f.value,
+                                                )
+                                              : [...current, f.value];
+                                            handleFilterChange(
+                                              key,
+                                              next.length ? next : null,
+                                            );
+                                          } else {
+                                            handleFilterChange(
+                                              key,
+                                              selected ? null : [f.value],
+                                            );
+                                          }
+                                        }}
+                                        className="flex w-full cursor-pointer items-center gap-2 py-1 text-left text-sm text-950 hover:bg-100 rounded-lg px-1.5"
                                       >
-                                        <input
-                                          type={
-                                            filterMultiple
-                                              ? "checkbox"
-                                              : "radio"
-                                          }
-                                          name={
-                                            filterMultiple
-                                              ? undefined
-                                              : `filter-${String(key)}`
-                                          }
-                                          checked={selected}
-                                          onChange={(e) => {
-                                            if (filterMultiple) {
-                                              const next = e.target.checked
-                                                ? [...current, f.value]
-                                                : current.filter(
-                                                    (v) => v !== f.value,
-                                                  );
-                                              handleFilterChange(
-                                                key,
-                                                next.length ? next : null,
-                                              );
-                                            } else {
-                                              handleFilterChange(
-                                                key,
-                                                [f.value],
-                                              );
-                                            }
-                                          }}
-                                          className="h-3 w-3"
-                                        />
-                                        {f.text}
-                                      </label>
+                                        {filterMultiple ? (
+                                          <span
+                                            className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border border-200 text-white ${
+                                              selected ? "bg-primary" : "bg-0"
+                                            }`}
+                                            aria-hidden
+                                          >
+                                            {selected && (
+                                              <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width="20"
+                                                height="20"
+                                                viewBox="0 0 20 20"
+                                                fill="none"
+                                              >
+                                                <rect
+                                                  x="2"
+                                                  y="2"
+                                                  width="16"
+                                                  height="16"
+                                                  rx="4"
+                                                  fill="#7F58EA"
+                                                />
+                                                <path
+                                                  fillRule="evenodd"
+                                                  clipRule="evenodd"
+                                                  d="M14.5304 8.03039L9.00006 13.5607L5.46973 10.0304L6.53039 8.96973L9.00006 11.4394L13.4697 6.96973L14.5304 8.03039Z"
+                                                  fill="white"
+                                                />
+                                              </svg>
+                                            )}
+                                          </span>
+                                        ) : (
+                                          <span
+                                            className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border border-200 ${
+                                              selected ? "bg-primary" : "bg-0"
+                                            }`}
+                                            aria-hidden
+                                          >
+                                            {selected && (
+                                              <span className="h-2 w-2 rounded-full bg-white" />
+                                            )}
+                                          </span>
+                                        )}
+                                        <span className="min-w-0 truncate">
+                                          {f.text}
+                                        </span>
+                                      </button>
                                     );
                                   })}
                                   <button
@@ -1146,14 +1222,46 @@ export function CommonTable<T extends Record<string, any> = any>({
                               : {}),
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={selected}
-                          onChange={(e) =>
-                            toggleRowSelection(record, e.target.checked)
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toggleRowSelection(record, !selected)
                           }
-                          className="h-3.5 w-3.5 rounded border-200 text-primary"
-                        />
+                          className="flex h-4 w-4 items-center justify-center rounded border-0 bg-transparent p-0"
+                          aria-label={selected ? "取消选择" : "选择"}
+                        >
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded border border-200 text-white ${
+                              selected ? "bg-primary" : "bg-0"
+                            }`}
+                            aria-hidden
+                          >
+                            {selected && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                              >
+                                <rect
+                                  x="2"
+                                  y="2"
+                                  width="16"
+                                  height="16"
+                                  rx="4"
+                                  fill="#7F58EA"
+                                />
+                                <path
+                                  fillRule="evenodd"
+                                  clipRule="evenodd"
+                                  d="M14.5304 8.03039L9.00006 13.5607L5.46973 10.0304L6.53039 8.96973L9.00006 11.4394L13.4697 6.96973L14.5304 8.03039Z"
+                                  fill="white"
+                                />
+                              </svg>
+                            )}
+                          </span>
+                        </button>
                       </td>
                     )}
                     {rowSelectionProp && rowSelectionProp.type === "radio" && (
@@ -1183,18 +1291,28 @@ export function CommonTable<T extends Record<string, any> = any>({
                               : {}),
                         }}
                       >
-                        <input
-                          type="radio"
-                          name="table-row-select"
-                          checked={selected}
-                          onChange={() => {
+                        <button
+                          type="button"
+                          onClick={() => {
                             if (!selected) {
                               setSelectedRowKeySet(new Set([key]));
                               rowSelectionProp.onChange?.([key], [record]);
                             }
                           }}
-                          className="h-3.5 w-3.5 border-200 text-primary"
-                        />
+                          className="flex h-4 w-4 items-center justify-center rounded-full border-0 bg-transparent p-0"
+                          aria-label={selected ? "已选择" : "选择"}
+                        >
+                          <span
+                            className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border border-200 ${
+                              selected ? "bg-primary" : "bg-0"
+                            }`}
+                            aria-hidden
+                          >
+                            {selected && (
+                              <span className="h-2 w-2 rounded-full bg-white" />
+                            )}
+                          </span>
+                        </button>
                       </td>
                     )}
                     {visibleColumns.map((col, colIndex) => {

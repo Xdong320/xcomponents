@@ -9,6 +9,7 @@ import {
   CommonTable,
   FilterBuilder,
   TablePagination,
+  Tooltip,
   type CommonColumnType,
   type FilterCondition,
   type FilterConditionDateValue,
@@ -198,17 +199,17 @@ const columns: CommonColumnType<SessionRecord>[] = [
             ? `${val.slice(0, 8)}-${val.slice(8, 12)}-${val.slice(12, 16)}-...`
             : val}
         </span>
-        <button
-          type="button"
-          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-200 bg-100 text-600 hover:bg-0 hover:text-950"
-          title="复制"
-          aria-label="复制"
-          onClick={(e) => {
-            e.stopPropagation();
-            void navigator.clipboard?.writeText(val).catch(() => {});
-          }}
-        >
-          <svg
+        <Tooltip title="复制">
+          <button
+            type="button"
+            className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-200 bg-100 text-600 hover:bg-0 hover:text-950"
+            aria-label="复制"
+            onClick={(e) => {
+              e.stopPropagation();
+              void navigator.clipboard?.writeText(val).catch(() => {});
+            }}
+          >
+            <svg
             width="12"
             height="12"
             viewBox="0 0 24 24"
@@ -222,6 +223,7 @@ const columns: CommonColumnType<SessionRecord>[] = [
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
           </svg>
         </button>
+        </Tooltip>
       </span>
     ),
   },
@@ -279,18 +281,19 @@ const columns: CommonColumnType<SessionRecord>[] = [
     fixed: "right",
     align: "center",
     render: () => (
-      <button
-        type="button"
-        className="inline-flex h-6 w-6 items-center justify-center rounded text-600 hover:bg-100 hover:text-950"
-        title="更多"
-        aria-label="更多"
-      >
-        <svg width="14" height="4" viewBox="0 0 14 4" fill="currentColor">
-          <circle cx="2" cy="2" r="1.5" />
-          <circle cx="7" cy="2" r="1.5" />
-          <circle cx="12" cy="2" r="1.5" />
-        </svg>
-      </button>
+      <Tooltip title="更多">
+        <button
+          type="button"
+          className="inline-flex h-6 w-6 items-center justify-center rounded text-600 hover:bg-100 hover:text-950"
+          aria-label="更多"
+        >
+          <svg width="14" height="4" viewBox="0 0 14 4" fill="currentColor">
+            <circle cx="2" cy="2" r="1.5" />
+            <circle cx="7" cy="2" r="1.5" />
+            <circle cx="12" cy="2" r="1.5" />
+          </svg>
+        </button>
+      </Tooltip>
     ),
   },
 ];
