@@ -571,6 +571,10 @@ function ConditionDialog({
     max: undefined,
   };
 
+  // 是否允许点击“应用”按钮
+  // 需求：日期类筛选必须先选择日期
+  const canApply = !isDate || !!dateValue.date;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <div
@@ -812,7 +816,8 @@ function ConditionDialog({
           <button
             type="button"
             onClick={onApply}
-            className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+            disabled={!canApply}
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             应用
           </button>
